@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:public_poll/Mobile/Widgets/Essential/Error.dart';
 import 'package:public_poll/Mobile/Widgets/Essential/LoadingAction.dart';
 import 'package:public_poll/Mobile/Widgets/PollDisplay.dart';
+import 'package:public_poll/Mobile/Widgets/PollListView.dart';
 import 'package:public_poll/Models/Poll.dart';
 import 'package:public_poll/Models/PollAnswer.dart';
 import 'package:public_poll/Controller/PollRequests.dart';
@@ -35,10 +36,14 @@ class _PollPage extends State<PollPage> {
   Future<void> _refreshList() async {
     List<Poll> polls = await getPollsRandom();
     setState(() {
-      listView = pollListView(polls);
+      listView = pollListView(polls, _refreshList, size);
     });
   }
 
+
+  /*
+  Add reload button under errorDisplay
+  */
   @override
   Widget build(BuildContext context) {
     size = MediaQuery.of(context).size;
@@ -50,7 +55,7 @@ class _PollPage extends State<PollPage> {
             future: getPollsRandom(),
             builder: (context, snapshot) {
               if (snapshot.hasData) {
-                listView = pollListView(snapshot.data);
+                listView = pollListView(snapshot.data, _refreshList, size);
                 return listView;
               } else if (snapshot.hasError) {
                 return errorDisplay();
@@ -58,33 +63,6 @@ class _PollPage extends State<PollPage> {
               return circularProgress();
             }),
       ),
-    );
-  }
-
-  //The poll list
-  Widget pollListView(List<Poll> polls) {
-    return RefreshIndicator(
-      onRefresh: _refreshList,
-      child: ListView(
-        physics: const ScrollPhysics(),
-        shrinkWrap: true,
-        children: createPollsUIFromListOfPolls(polls),
-      ),
-    );
-  }
-
-  List<Widget> createPollsUIFromListOfPolls(List<Poll> polls) {
-    List<Widget> displays = List<Widget>.empty(growable: true);
-    for (int i = 0; i < polls.length; i++) {
-      displays.add(createPollUIFromSinglePoll(polls[i]));
-    }
-    return displays;
-  }
-
-  Widget createPollUIFromSinglePoll(Poll poll) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: size.height * .01),
-      child: PollDisplay(poll),
     );
   }
 }

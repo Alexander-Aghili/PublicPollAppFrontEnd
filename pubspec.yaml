@@ -29,6 +29,9 @@ dependencies:
   provider: ^5.0.0
   share_plus: ^2.1.2
   http: ^0.13.3
+  image_picker: ^0.7.2
+  shared_preferences: ^2.0.6
+  sign_in_with_apple: ^3.0.0
 
 flutter_icons:
   image_path: "assets/images/poll_image.png"
@@ -44,3 +47,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/authbuttons/
+    - assets/images/

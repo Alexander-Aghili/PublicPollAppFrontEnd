@@ -8,6 +8,8 @@ import 'package:public_poll/Style.dart';
 import 'package:share_plus/share_plus.dart';
 import 'dart:io' show Platform;
 
+import 'Essential/MenuItem.dart';
+
 /*
  * Copyright © 2021 Alexander Aghili - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
@@ -111,6 +113,8 @@ class PollDisplay extends StatelessWidget {
               0,
               "Save",
               Icon(Icons.archive),
+              size: size,
+              context: context,
             ),
             PopupMenuDivider(),
             menuItem(
@@ -120,33 +124,14 @@ class PollDisplay extends StatelessWidget {
                   Icons.report,
                   color: Colors.red,
                 ),
-                color: Colors.red),
+                color: Colors.red,
+                size: size,
+                context: context
+              ),
           ],
           onSelected: (item) => {},
         ),
       ],
-    );
-  }
-
-  PopupMenuItem<int> menuItem(int value, String text, Icon icon,
-      {Color color}) {
-    return PopupMenuItem<int>(
-      value: value,
-      child: Row(
-        children: <Widget>[
-          Container(
-            width: size.width * .25,
-            child: Text(
-              text,
-              style: (color == null
-                  ? Styles.baseTextStyle(context, 25)
-                  : Styles.baseTextStyleWithColor(context, 25, color)),
-            ),
-          ),
-          Spacer(),
-          icon,
-        ],
-      ),
     );
   }
 

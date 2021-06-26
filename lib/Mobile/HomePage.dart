@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'Pages/AccountPage.dart';
+import 'Pages/AcountPage/AccountPage.dart';
 import 'Pages/CreatePollPages/CreatePollPage.dart';
 import 'Pages/HomePages/PollPage.dart';
 
@@ -14,13 +14,20 @@ import 'Pages/HomePages/PollPage.dart';
  */
 
 class HomePage extends StatefulWidget {
+  String uid;
+
+  HomePage(this.uid);
+
   @override
-  State<StatefulWidget> createState() => _HomePage();
+  State<StatefulWidget> createState() => _HomePage(uid: uid);
 }
 
 class _HomePage extends State<HomePage> {
   PageController pageController;
   int pageIndex = 0;
+  String uid;
+
+  _HomePage({this.uid});
 
   void initState() {
     super.initState();
@@ -46,15 +53,18 @@ class _HomePage extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      statusBarColor: Theme.of(context).cupertinoOverrideTheme.primaryContrastingColor, // Color for Android
-      statusBarBrightness: Theme.of(context).brightness // Dark == white status bar -- for IOS.
-    ));
+        statusBarColor: Theme.of(context)
+            .cupertinoOverrideTheme
+            .primaryContrastingColor, // Color for Android
+        statusBarBrightness:
+            Theme.of(context).brightness // Dark == white status bar -- for IOS.
+        ));
     return Scaffold(
       body: PageView(
         children: <Widget>[
           PollPage(),
           CreatePollPage(),
-          AccountPage(),
+          AccountPage(uid),
         ],
         controller: pageController,
         onPageChanged: pageChanged,
@@ -65,8 +75,7 @@ class _HomePage extends State<HomePage> {
         onTap: onTapChangePage,
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(icon: Icon(Icons.home)),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.add_box_outlined, size: 35)),
+          BottomNavigationBarItem(icon: Icon(Icons.add_box_outlined, size: 35)),
           BottomNavigationBarItem(icon: Icon(Icons.account_circle_outlined))
         ],
       ),

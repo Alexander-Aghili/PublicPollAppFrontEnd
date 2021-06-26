@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:public_poll/Authentication/SignUpPage.dart';
+import 'package:public_poll/Controller/UserController.dart';
+import 'package:public_poll/Mobile/HomePage.dart';
+import 'package:public_poll/Style.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class SignInPage extends StatefulWidget {
   @override
@@ -8,19 +13,21 @@ class SignInPage extends StatefulWidget {
 
 class _SignInPage extends State<SignInPage> {
   final GlobalKey<FormState> _registerFormKey = GlobalKey<FormState>();
-  TextEditingController emailController;
+  TextEditingController usernameController;
   TextEditingController passwordController;
   Size size;
+  Container errorDisplay;
 
   @override
   initState() {
-    emailController = new TextEditingController();
+    usernameController = new TextEditingController();
     passwordController = new TextEditingController();
+    errorDisplay = errorContainer("ok");
     super.initState();
   }
 
   void dispose() {
-    emailController.dispose();
+    usernameController.dispose();
     passwordController.dispose();
     super.dispose();
   }
@@ -39,22 +46,39 @@ class _SignInPage extends State<SignInPage> {
     );
   }
 
+  Container errorContainer(String information) {
+    Text text = Text("");
+    if (information == "info error") {
+      text = Text(
+        "Incorrect username or password",
+        style: Styles.baseTextStyleWithColor(context, 20, Colors.red),
+      );
+    } else if (information == "regular error") {
+      text = Text(
+        "System error, retry.",
+        style: Styles.baseTextStyleWithColor(context, 20, Colors.red),
+      );
+    }
+    return Container(
+      child: text,
+    );
+  }
+
   Widget signInForm() {
     return Form(
       key: _registerFormKey,
       child: Column(
         children: <Widget>[
-          signInRow(Icon(Icons.account_circle), "Email", false, emailController,
-              null),
-          signInRow(
-              Icon(Icons.vpn_key), "Password", true, passwordController, null),
+          signInRow(Icon(Icons.account_circle), "Username", false,
+              usernameController),
+          signInRow(Icon(Icons.vpn_key), "Password", true, passwordController),
         ],
       ),
     );
   }
 
   Widget signInRow(Icon icon, String inputText, bool secureText,
-      TextEditingController controller, Function validator) {
+      TextEditingController controller) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
@@ -77,7 +101,6 @@ class _SignInPage extends State<SignInPage> {
               border: OutlineInputBorder(),
               labelText: inputText,
             ),
-            validator: (value) => validator(value),
           ),
         ),
       ],
@@ -86,9 +109,9 @@ class _SignInPage extends State<SignInPage> {
 
   Widget signInButton() {
     return Container(
-      padding: EdgeInsets.only(top:size.height * .01),
+      padding: EdgeInsets.only(top: size.height * .01),
       child: ElevatedButton(
-        onPressed: () => null,
+        onPressed: () async => await signIn(),
         child: Text("Sign in", style: TextStyle(color: Colors.black)),
         style: ButtonStyle(
             backgroundColor: MaterialStateProperty.all<Color>(Colors.blue),
@@ -99,19 +122,24 @@ class _SignInPage extends State<SignInPage> {
 
   Widget seperateServicesSignInColumn() {
     bool isApple = isAppleDevice();
+    SignIn signIn = SignIn();
     double height = 60;
     if (isApple) {
       return Column(
         children: <Widget>[
           SizedBox(
             height: height,
-            child: signInWithSeperateServiceButton(AssetImage(
-                "assets/images/authbuttons/google_signin_button.png")),
+            child: signInWithSeperateServiceButton(
+                null,
+                AssetImage(
+                    "assets/images/authbuttons/google_signin_button.png")),
           ),
           SizedBox(
             height: height,
-            child: signInWithSeperateServiceButton(AssetImage(
-                "assets/images/authbuttons/apple_signin_button.png")),
+            child: signInWithSeperateServiceButton(
+              signIn.signInWithApple, 
+              AssetImage("assets/images/authbuttons/apple_signin_button.png")
+            ),
           ),
         ],
       );
@@ -120,25 +148,28 @@ class _SignInPage extends State<SignInPage> {
         children: <Widget>[
           SizedBox(
             height: height,
-            child: signInWithSeperateServiceButton(AssetImage(
-                "assets/images/authbuttons/google_signin_button.png")),
+            child: signInWithSeperateServiceButton(
+                null,
+                AssetImage(
+                    "assets/images/authbuttons/google_signin_button.png")),
           ),
         ],
       );
     }
   }
 
-  Widget signInWithSeperateServiceButton(
-      /*VoidCallback action,*/ AssetImage image) {
-    return GestureDetector(
-      onTap: null,
-      child: Container(
-        width: 270.0,
-        height: 65.0,
-        decoration: BoxDecoration(
-            image: DecorationImage(
-          image: image,
-        )),
+  Widget signInWithSeperateServiceButton(Function function, AssetImage image) {
+    return InkWell(
+      child: GestureDetector(
+        onTap: () => function(),
+        child: Container(
+          width: 270.0,
+          height: 65.0,
+          decoration: BoxDecoration(
+              image: DecorationImage(
+            image: image,
+          )),
+        ),
       ),
     );
   }
@@ -188,13 +219,14 @@ class _SignInPage extends State<SignInPage> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: <Widget>[
                 topText(),
+                errorDisplay,
                 signInForm(),
                 signInButton(),
                 orContainer(50),
                 seperateServicesSignInColumn(),
+                Padding(padding: EdgeInsets.only(bottom: size.height * .175)),
                 signUpButton(context),
                 help(),
-                Padding(padding: EdgeInsets.only(bottom: size.height*.05)),     
               ],
             ),
           ],
@@ -218,5 +250,49 @@ class _SignInPage extends State<SignInPage> {
         ),
       ),
     );
+  }
+
+  Future signIn() async {
+    SignIn signIn = SignIn(
+        username: usernameController.text, password: passwordController.text);
+    String UID = await signIn.sendSignInRequest();
+    //Error container says bad username or password
+    if (UID.isNotEmpty && UID.indexOf(" ") == -1) {
+      //Saving logged
+      SharedPreferences preferences = await SharedPreferences.getInstance();
+      preferences.setString("UID", UID);
+
+      //Going to push with User information
+      Navigator.pushReplacement(
+          context, new MaterialPageRoute(builder: (context) => HomePage(UID)));
+    } else {
+      setState(() {
+        errorDisplay = errorContainer(UID);
+      });
+    }
+  }
+}
+
+class SignIn {
+  String username;
+  String password;
+
+  SignIn({this.username, this.password});
+
+  Future<String> sendSignInRequest() async {
+    UserController request = UserController();
+    return await request.signInWithUsernameAndPassword(username.trim(), password.trim());
+  }
+
+  Future signInWithApple() async {
+    final credential = SignInWithApple.getAppleIDCredential(
+      scopes: [
+        AppleIDAuthorizationScopes.email,
+        AppleIDAuthorizationScopes.fullName,
+      ],
+    );
+
+    print(credential);
+
   }
 }

@@ -9,6 +9,10 @@ import 'package:flutter/services.dart';
  * Written by Alexander Aghili alexander.w.aghili@gmail.com, May 2021
  */
 
+/*
+ToDo: Fix the colors of the TextFields
+*/
+
 ThemeData darkMode() {
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
   return ThemeData(

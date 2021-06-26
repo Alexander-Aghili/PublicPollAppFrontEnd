@@ -51,10 +51,10 @@ class Poll {
   }
 
   Map<String, dynamic> toJson() => {
-    'question': pollQuestion,
-    'answers': answers,
-    'comments': comments,
-  };
+        'question': pollQuestion,
+        'answers': answers,
+        'comments': comments,
+      };
 
   @override
   String toString() {
