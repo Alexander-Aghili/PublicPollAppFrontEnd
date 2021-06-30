@@ -44,7 +44,6 @@ class _AccountHeader extends State<AccountHeader> {
   Widget build(BuildContext context) {
     size = MediaQuery.of(context).size;
     return Container(
-      //decoration: BoxDecoration(border: Border.all(color: Colors.white)),
       margin: EdgeInsets.symmetric(
         horizontal: size.width * .05,
       ),

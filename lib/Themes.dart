@@ -38,7 +38,7 @@ ThemeData lightMode() {
         primaryColor: CupertinoColors.darkBackgroundGray,
         primaryContrastingColor: Colors.black,
       ),
-      backgroundColor: Colors.pink.shade100,
+      backgroundColor: Colors.white,
       primaryColor: Colors.white,
       hintColor: Colors.black,
       dialogTheme: DialogTheme(

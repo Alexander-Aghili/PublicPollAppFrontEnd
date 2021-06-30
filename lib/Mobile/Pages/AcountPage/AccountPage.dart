@@ -3,13 +3,12 @@ import 'package:public_poll/Authentication/SignInPage.dart';
 import 'package:public_poll/Controller/UserController.dart';
 import 'package:public_poll/Mobile/Pages/AcountPage/AccountHeader.dart';
 import 'package:public_poll/Mobile/Pages/AcountPage/UserPollTab.dart';
-import 'package:public_poll/Mobile/Pages/HomePages/PollPage.dart';
 import 'package:public_poll/Mobile/Widgets/Essential/Error.dart';
 import 'package:public_poll/Mobile/Widgets/Essential/LoadingAction.dart';
 import 'package:public_poll/Mobile/Widgets/Essential/MenuItem.dart';
 import 'package:public_poll/Models/User.dart';
-import 'package:public_poll/Themes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /*
  * Copyright © 2021 Alexander Aghili - All Rights Reserved
@@ -30,6 +29,9 @@ class _AccountPage extends State<AccountPage> {
   bool isUserAccount;
   Size size;
   _AccountPage(this.uid);
+
+  //URLS
+  String reportBugUrl = "http://192.168.87.118:8082";
 
   Future<User> getUserFromID() async {
     UserController userController = UserController();
@@ -76,23 +78,20 @@ class _AccountPage extends State<AccountPage> {
           context: context,
         ),
         menuItem(
-          1, 
-          "Report a Bug", 
-          Icon(Icons.bug_report), 
-          size: size, context: context,
+          1,
+          "Report a Bug",
+          Icon(Icons.bug_report),
+          size: size,
+          context: context,
         ),
         menuItem(
-          2, 
-          "Contact Us", 
-          Icon(Icons.mail), 
-          size: size, context: context,
+          2,
+          "Contact Us",
+          Icon(Icons.mail),
+          size: size,
+          context: context,
         ),
-        menuItem(
-          3, 
-          "Help", 
-          Icon(Icons.help), 
-          size: size, context: context
-        ),
+        menuItem(3, "Help", Icon(Icons.help), size: size, context: context),
         PopupMenuDivider(),
         menuItem(
             4,
@@ -108,6 +107,10 @@ class _AccountPage extends State<AccountPage> {
       onSelected: (item) async => {
         if (item == 0)
           {}
+        else if (item == 1)
+        {
+          await canLaunch(reportBugUrl) ? launch(reportBugUrl) : throw 'Could not launch $reportBugUrl',
+        }
         else if (item == 4)
           {
             await logout(),
@@ -165,7 +168,10 @@ class _AccountPage extends State<AccountPage> {
             print(snapshot.error);
             return errorDisplay();
           }
-          return circularProgress();
+          return SafeArea(
+            top: true,
+            child: circularProgress(),
+          );
         });
   }
 

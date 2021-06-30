@@ -29,7 +29,16 @@ TO DO:
 -touch up
 */
 
-class PollDisplay extends StatelessWidget {
+class PollDisplay extends StatefulWidget{
+  final Poll poll;
+  PollDisplay(this.poll);
+
+  @override
+  State<StatefulWidget> createState() => _PollDisplay(poll);
+  
+}
+
+class _PollDisplay extends State<PollDisplay> {
   Poll poll;
   Color contrastColor;
   Size size;
@@ -37,7 +46,7 @@ class PollDisplay extends StatelessWidget {
   int totalVotes;
   Widget rowState;
 
-  PollDisplay(this.poll);
+  _PollDisplay(this.poll);
 
   //Calculate for different screen widths, specifically the /42 number
   int calculateLinesForQuestion() {

@@ -55,6 +55,15 @@ class UserController {
         body: JSONFormat);
     return response.body.toString();
   }
+
+  Future<List<User>> getUsersFromIDs(List<String> uids) async {
+    print(jsonEncode(uids));
+    Response response = await http.post(Uri.parse(url+"getUsers"),
+      headers: <String, String> {
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(uids));
+  }
 }
 
 String jsonFormatWithTwoComponents(
