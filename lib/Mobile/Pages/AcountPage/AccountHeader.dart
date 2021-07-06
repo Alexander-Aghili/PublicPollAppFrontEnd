@@ -34,6 +34,9 @@ class _AccountHeader extends State<AccountHeader> {
         ));
   }
 
+
+  //Maybe look at this?
+  //https://flutteragency.com/make-text-as-big-as-the-width-allows-in-flutter/
   Widget username() {
     return Expanded(
        child: Text(user.username, style: Styles.baseTextStyle(context, 40),)
@@ -44,6 +47,7 @@ class _AccountHeader extends State<AccountHeader> {
   Widget build(BuildContext context) {
     size = MediaQuery.of(context).size;
     return Container(
+      //decoration: BoxDecoration(border: Border.all(color: Colors.white)),
       margin: EdgeInsets.symmetric(
         horizontal: size.width * .05,
       ),

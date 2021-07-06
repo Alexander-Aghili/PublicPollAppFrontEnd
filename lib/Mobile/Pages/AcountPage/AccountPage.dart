@@ -7,6 +7,7 @@ import 'package:public_poll/Mobile/Widgets/Essential/Error.dart';
 import 'package:public_poll/Mobile/Widgets/Essential/LoadingAction.dart';
 import 'package:public_poll/Mobile/Widgets/Essential/MenuItem.dart';
 import 'package:public_poll/Models/User.dart';
+import 'package:public_poll/url_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -31,7 +32,8 @@ class _AccountPage extends State<AccountPage> {
   _AccountPage(this.uid);
 
   //URLS
-  String reportBugUrl = "http://192.168.87.118:8082";
+  String reportBugUrl = web_base_url + "/bugReport";
+  String contactUsUrl = web_base_url + "/contactUs";
 
   Future<User> getUserFromID() async {
     UserController userController = UserController();
@@ -106,10 +108,18 @@ class _AccountPage extends State<AccountPage> {
       ],
       onSelected: (item) async => {
         if (item == 0)
-          {}
+        {}
         else if (item == 1)
         {
-          await canLaunch(reportBugUrl) ? launch(reportBugUrl) : throw 'Could not launch $reportBugUrl',
+          await canLaunch(reportBugUrl)
+              ? launch(reportBugUrl)
+              : throw 'Could not launch $reportBugUrl',
+        }
+        else if (item == 2) 
+        {
+          await canLaunch(contactUsUrl)
+            ? launch(contactUsUrl)
+            : throw 'Could not launch $contactUsUrl',
         }
         else if (item == 4)
           {

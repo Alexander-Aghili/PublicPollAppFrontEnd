@@ -29,13 +29,12 @@ TO DO:
 -touch up
 */
 
-class PollDisplay extends StatefulWidget{
+class PollDisplay extends StatefulWidget {
   final Poll poll;
   PollDisplay(this.poll);
 
   @override
   State<StatefulWidget> createState() => _PollDisplay(poll);
-  
 }
 
 class _PollDisplay extends State<PollDisplay> {
@@ -135,8 +134,7 @@ class _PollDisplay extends State<PollDisplay> {
                 ),
                 color: Colors.red,
                 size: size,
-                context: context
-              ),
+                context: context),
           ],
           onSelected: (item) => {},
         ),
@@ -166,7 +164,10 @@ class _PollDisplay extends State<PollDisplay> {
           onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => CommentPage(comments: poll.comments))),
+                  builder: (context) => CommentPage(
+                        comments: poll.comments,
+                        pollID: poll.pollID,
+                      ))),
           child: bottomRowIcon(Icon(Icons.comment), Alignment.centerLeft),
         ),
         Spacer(),
@@ -185,7 +186,7 @@ class _PollDisplay extends State<PollDisplay> {
         Spacer(),
         GestureDetector(
           onTap: () => Share.share(
-            "http://localhost:8081/PublicPollBackEnd/pollDisplay/" +
+            "http://192.168.87.188:8082:8081/pollDisplay?id=" +
                 poll.pollID.toString(),
           ),
           child: bottomRowIcon(shareIcon, Alignment.centerRight),

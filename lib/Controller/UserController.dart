@@ -57,12 +57,21 @@ class UserController {
   }
 
   Future<List<User>> getUsersFromIDs(List<String> uids) async {
-    print(jsonEncode(uids));
-    Response response = await http.post(Uri.parse(url+"getUsers"),
-      headers: <String, String> {
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(uids));
+    Response response = await http.post(Uri.parse(url + "getUsers"),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: "{ \"userIDs\": " + jsonEncode(uids) + "}");
+
+    if (response.statusCode != 201) {
+      return new List<User>.empty(growable: true);
+    }
+    return listOfUsers(jsonDecode(response.body));
+  }
+
+  List<User> listOfUsers(Map<String, dynamic> json) {
+    var usersJson = json['users'] as List;
+    return usersJson.map((userJson) => User.fromJson(userJson)).toList();
   }
 }
 

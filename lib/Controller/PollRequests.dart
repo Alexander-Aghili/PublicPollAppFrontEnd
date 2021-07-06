@@ -4,6 +4,8 @@ import 'package:public_poll/Models/Poll.dart';
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:public_poll/Models/PollComment.dart';
+
 class PollRequests {
   String url = 'http://192.168.87.118:8081/PublicPollBackEnd/publicpoll/poll/';
   /* GET Requests*/
@@ -66,6 +68,34 @@ class PollRequests {
       return listOfPolls(jsonDecode(response.body));
     } catch (e) {
       return List<Poll>.empty();
+    }
+  }
+
+  Future<String> addComment(PollComment comment) async {
+    Response response = await http.post(
+      Uri.parse(url + "addComment"),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(comment.toJsonSend()),
+    );
+    if (response.statusCode != 201 || response.body != "ok") {
+      return "error";
+    } else {
+      return "ok";
+    }
+  }
+
+  Future<String> deleteComment(String id) async {
+    Response response = await http.post(Uri.parse(url + "deleteComment"),
+        headers: <String, String>{
+          'Content-Type': 'text/plain; charset=UTF-8',
+        },
+        body: id);
+    if (response.statusCode != 201 || response.body != "ok") {
+      return "error";
+    } else {
+      return "ok";
     }
   }
 }

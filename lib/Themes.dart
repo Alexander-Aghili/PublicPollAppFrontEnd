@@ -27,6 +27,8 @@ ThemeData darkMode() {
     dialogTheme: DialogTheme(
       contentTextStyle: TextStyle(fontSize: 25),
     ),
+    focusColor: Colors.grey.shade800,
+    accentColor: Colors.grey.shade300,
   );
 }
 
@@ -44,5 +46,7 @@ ThemeData lightMode() {
       dialogTheme: DialogTheme(
         backgroundColor: Colors.blue,
       ),
+      focusColor: Colors.grey.shade300,
+      accentColor: Colors.grey.shade800,
     );
 }

@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:public_poll/Models/Poll.dart';
-
-import 'User.dart';
 
 /*
  * Copyright © 2021 Alexander Aghili - All Rights Reserved
@@ -14,7 +11,6 @@ class PollComment {
   String pollID;
   int commentID;
   String comment;
-  /* Change to User object*/
   String user;
 
   PollComment(
@@ -33,10 +29,17 @@ class PollComment {
   }
 
   Map<String, dynamic> toJson() => {
-    'comment': comment,
-    'user': user,
-    'commentID': commentID,
-  };
+        'comment': comment,
+        'user': user,
+        'commentID': commentID,
+      };
+
+  Map<String, dynamic> toJsonSend() => {
+        'pollID': pollID,
+        'comment': comment,
+        'user': user,
+        'commentID': commentID,
+      };
 
   @override
   String toString() {

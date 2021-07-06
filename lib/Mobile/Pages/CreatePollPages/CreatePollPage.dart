@@ -251,7 +251,7 @@ class _CreatePollPage extends State<CreatePollPage> {
     return IconButton(
       icon: shareIcon,
       onPressed: () => Share.share(
-          "http://localhost:8081/PublicPollBackEnd/pollDisplay/" +
+          "http://192.167.87.118:8082:8081/pollDisplay?id=" +
               poll.pollID.toString()),
     );
   }
