@@ -12,28 +12,40 @@ class PollAnswer {
   String pollID;
   String answer;
   String letter;
-  int numClicked;
+  List<String> userIDs;
 
   PollAnswer(
       {this.pollID,
       @required this.letter,
       @required this.answer,
-      this.numClicked = 0});
+      @required this.userIDs});
 
   factory PollAnswer.fromJson(Map<String, dynamic> json, String pollID) {
+    List<String> getUserIDs() {
+      if (json['users'].toString() == "[]") {
+        return new List<String>.empty();
+      }
+      List<String> userIDList = new List<String>.empty(growable: true);
+      List<dynamic> usersList = json['users'] as List<dynamic>;
+      for (int i = 0; i < usersList.length; i++) {
+        userIDList.add(usersList[i].toString());
+      }
+      return userIDList;
+    }
+
     return PollAnswer(
       pollID: pollID,
       letter: json['letter'] as String,
       answer: json['answer'] as String,
-      numClicked: json['numClicked'] as int,
+      userIDs: getUserIDs(), // Might not work
     );
   }
 
   Map<String, dynamic> toJson() => {
-    'letter': letter,
-    'answer': answer,
-    'numClicked': numClicked,
-  };
+        'letter': letter,
+        'answer': answer,
+        'users': userIDs,
+      };
 
   @override
   String toString() {

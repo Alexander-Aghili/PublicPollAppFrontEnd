@@ -1,7 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:public_poll/Controller/Domain.dart';
+import 'package:public_poll/Controller/PollRequests.dart';
 import 'package:public_poll/Mobile/Pages/HomePages/CommentPage.dart';
 import 'package:public_poll/Mobile/Pages/HomePages/StatisticsPage.dart';
+import 'package:public_poll/Mobile/Widgets/Alert.dart';
 import 'package:public_poll/Models/Poll.dart';
 import 'package:public_poll/Models/PollAnswer.dart';
 import 'package:public_poll/Style.dart';
@@ -55,7 +58,7 @@ class _PollDisplay extends State<PollDisplay> {
   int getTotalVotes() {
     int votes = 0;
     for (int i = 0; i < poll.answers.length; i++) {
-      votes += poll.answers[i].numClicked;
+      votes += poll.answers[i].userIDs.length;
     }
     return votes;
   }
@@ -99,14 +102,22 @@ class _PollDisplay extends State<PollDisplay> {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Spacer(),
+        if (poll.isPrivate)
+          Padding(
+            padding:
+                EdgeInsets.only(left: size.width * .05, top: size.height * .02),
+            child: Icon(
+              Icons.lock,
+              size: 23,
+            ),
+          ),
         //For some fucking reason it isn't center and I wanna fucking kill this thing
         Expanded(
           flex: 20,
           child: Container(
             alignment: Alignment.center,
             padding:
-                EdgeInsets.only(left: size.width * .1, top: size.height * .025),
+                EdgeInsets.only(left: size.width * .1, top: size.height * .02),
             child: Text(
               poll.pollQuestion,
               style: Styles.baseTextStyle(context, 25),
@@ -125,18 +136,47 @@ class _PollDisplay extends State<PollDisplay> {
               context: context,
             ),
             PopupMenuDivider(),
-            menuItem(
-                1,
-                "Report",
-                Icon(
-                  Icons.report,
+            if (false)
+              menuItem(
+                  1,
+                  "Report",
+                  Icon(
+                    Icons.report,
+                    color: Colors.red,
+                  ),
                   color: Colors.red,
-                ),
-                color: Colors.red,
-                size: size,
-                context: context),
+                  size: size,
+                  context: context),
+            if (true)
+              menuItem(
+                  2,
+                  "Delete",
+                  Icon(
+                    Icons.delete,
+                    color: Colors.red,
+                  ),
+                  color: Colors.red,
+                  size: size,
+                  context: context),
           ],
-          onSelected: (item) => {},
+          onSelected: (item) async {
+            PollRequests requests = PollRequests();
+            if (item == 1) {
+              showDialog(
+                  context: context,
+                  builder: (context) {
+                    return report(context, poll.pollID, "poll");
+                  });
+            } else if (item == 2) {
+              String response = await requests.deletePoll(poll.pollID);
+              if (response == "ok")
+                removedSnackBar("Poll Deleted", context);
+              else {
+                errorSnackBar(
+                    "Error. Could not delete poll. Try again.", context);
+              }
+            }
+          },
         ),
       ],
     );
@@ -186,8 +226,7 @@ class _PollDisplay extends State<PollDisplay> {
         Spacer(),
         GestureDetector(
           onTap: () => Share.share(
-            "http://192.168.87.188:8082:8081/pollDisplay?id=" +
-                poll.pollID.toString(),
+            Domain.getWeb() + "pollDisplay?id=" + poll.pollID.toString(),
           ),
           child: bottomRowIcon(shareIcon, Alignment.centerRight),
         ),
@@ -241,7 +280,7 @@ class _PollAnswerDisplaySystem extends State<PollAnswerDisplaySystem> {
   @override
   void initState() {
     super.initState();
-    fuction = pollAnswerBase;
+    fuction = pollAnswerDisplayPercentage;
   }
 
   @override
@@ -407,7 +446,12 @@ class _PollAnswerDisplay extends State<PollAnswerDisplay> {
   }
 
   Container _percentageInformation() {
-    int percentage = ((pollAnswer.numClicked / totalVotes) * 100).toInt();
+    int percentage;
+    try {
+      percentage = ((pollAnswer.userIDs.length / totalVotes) * 100).toInt();
+    } catch (e) {
+      percentage = 0;
+    }
     return Container(
       child: Text(
         percentage.toString() + "%",

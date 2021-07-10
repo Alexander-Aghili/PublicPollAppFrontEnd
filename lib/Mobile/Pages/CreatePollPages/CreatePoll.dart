@@ -8,9 +8,11 @@ class CreatePoll {
   List<AnswerBox> answerBoxes;
   String question;
   bool isPrivatePoll;
+  String uid;
 
-  CreatePoll(
-      {@required this.answerBoxes,
+  CreatePoll({
+      @required this.uid,
+      @required this.answerBoxes,
       @required this.question,
       @required this.isPrivatePoll});
 
@@ -21,7 +23,8 @@ class CreatePoll {
 
   Poll createPoll() {
     List<PollAnswer> answers = getAnswersFromAnswerBox();
-    return Poll(pollQuestion: question, answers: answers);
+    return Poll( creatorID: uid,
+        pollQuestion: question, answers: answers, isPrivate: isPrivatePoll);
   }
 
   List<PollAnswer> getAnswersFromAnswerBox() {
@@ -33,6 +36,7 @@ class CreatePoll {
         new PollAnswer(
           letter: answer.letter,
           answer: answer.controller.text.toString(),
+          userIDs: List<String>.empty(growable: true),
         ),
       );
     }

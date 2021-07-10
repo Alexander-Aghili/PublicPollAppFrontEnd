@@ -2,11 +2,11 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:public_poll/Controller/PollRequests.dart';
+import 'package:public_poll/Mobile/Widgets/Alert.dart';
 import 'package:public_poll/Models/PollComment.dart';
 import 'package:public_poll/Models/User.dart';
 
 import 'Essential/MenuItem.dart';
-
 
 //Removing a comment doesn't change its state and it remains
 class CommentDisplay extends StatefulWidget {
@@ -33,7 +33,7 @@ class _CommentDisplay extends State<CommentDisplay> {
   @override
   Widget build(BuildContext context) {
     size = MediaQuery.of(context).size;
-    return  Flexible(
+    return Flexible(
       fit: FlexFit.loose,
       child: Container(
         margin: EdgeInsets.only(bottom: 15),
@@ -69,9 +69,10 @@ class _CommentDisplay extends State<CommentDisplay> {
   Widget avatarArea() {
     return Flexible(
       child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: 7.5,
-          vertical: 10,
+        padding: EdgeInsets.only(
+          left: 7.5,
+          right: 7.5,
+          top: 20,
         ),
         child: CircleAvatar(
           radius: 20,
@@ -85,7 +86,7 @@ class _CommentDisplay extends State<CommentDisplay> {
   //Padding between username and comment is here
   Widget usernameHeader() {
     return Padding(
-      padding: EdgeInsets.only(bottom: 7.5, top: 10),
+      padding: EdgeInsets.only(bottom: 0, top: 15),
       child: Text(
         user.username,
         style: TextStyle(
@@ -98,6 +99,7 @@ class _CommentDisplay extends State<CommentDisplay> {
 
   Widget popMenuButton() {
     return PopupMenuButton(
+      padding: EdgeInsets.symmetric(vertical: 5),
       color: Theme.of(context).focusColor,
       itemBuilder: (context) => <PopupMenuEntry>[
         menuItem(
@@ -125,29 +127,22 @@ class _CommentDisplay extends State<CommentDisplay> {
       ],
       onSelected: (item) async {
         PollRequests pollRequests = PollRequests();
-        if (item == 1) {
-          if (await pollRequests.deleteComment(comment.commentID.toString()) ==
-              "ok") {
+        if (item == 0) {
+          showDialog(
+            context: context,
+            builder: (context) {
+              return report(context, comment.commentID.toString(), "comment");
+            },
+          );
+        }
 
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                backgroundColor: Theme.of(context).focusColor,
-                content: Text(
-                  "Comment Removed", 
-                  style: TextStyle(color: Theme.of(context).cupertinoOverrideTheme.primaryContrastingColor),
-                ),
-              ),
-            );
+        if (item == 1) {
+          String response =
+              await pollRequests.deleteComment(comment.commentID.toString());
+          if (response == "ok") {
+            removedSnackBar("Comment Removed", context);
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                backgroundColor: Theme.of(context).focusColor,
-                content: Text(
-                  "Error. Comment wasn't removed. Try again.",
-                  style: TextStyle(color: Theme.of(context).cupertinoOverrideTheme.primaryContrastingColor),
-                ),
-              ),
-            );
+            errorSnackBar("Error. Comment wasn't removed. Try again.", context);
           }
         }
       },

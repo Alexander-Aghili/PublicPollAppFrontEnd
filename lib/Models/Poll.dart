@@ -13,15 +13,19 @@ import 'PollComment.dart';
  */
 
 class Poll {
+  String creatorID;
   String pollID;
   String pollQuestion;
   List<PollAnswer> answers;
   List<PollComment> comments;
+  bool isPrivate;
 
   Poll(
       {this.pollID,
+      @required this.creatorID,
       @required this.pollQuestion,
       @required this.answers,
+      @required this.isPrivate,
       this.comments});
 
   factory Poll.fromJson(Map<String, dynamic> json) {
@@ -43,17 +47,21 @@ class Poll {
     }
 
     return Poll(
+      creatorID: json['creatorID'],
       pollID: pollID,
       pollQuestion: json['question'],
       answers: getAnswersFromJSON(),
       comments: getCommentsFromJSON(),
+      isPrivate: json['isPrivate'],
     );
   }
 
   Map<String, dynamic> toJson() => {
+        'creatorID': creatorID,
         'question': pollQuestion,
         'answers': answers,
         'comments': comments,
+        'isPrivate': isPrivate,
       };
 
   @override

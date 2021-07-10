@@ -1,5 +1,6 @@
 import 'package:http/http.dart' as http;
 import 'package:http/http.dart';
+import 'package:public_poll/Controller/Domain.dart';
 import 'package:public_poll/Models/Poll.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -7,7 +8,7 @@ import 'dart:convert';
 import 'package:public_poll/Models/PollComment.dart';
 
 class PollRequests {
-  String url = 'http://192.168.87.118:8081/PublicPollBackEnd/publicpoll/poll/';
+  String url = Domain.getAPI() + 'poll/';
   /* GET Requests*/
   Future<Poll> getPollByID(String id) async {
     Response response = await http.get(Uri.parse(url + 'getPoll/' + id));
@@ -21,7 +22,6 @@ class PollRequests {
 
   Future<List<Poll>> getPolls() async {
     Response response = await http.get(Uri.parse(url + 'getPolls'));
-
     if (response.statusCode == 200) {
       return listOfPolls(jsonDecode(response.body));
     } else {
@@ -64,6 +64,7 @@ class PollRequests {
       },
       body: body,
     );
+
     try {
       return listOfPolls(jsonDecode(response.body));
     } catch (e) {
@@ -86,13 +87,22 @@ class PollRequests {
     }
   }
 
+  /*Delete*/
+  Future<String> deletePoll(String pollID) async {
+    Response response =
+        await http.delete(Uri.parse(url + "deletePoll/" + pollID));
+        
+    if (response.statusCode != 202 || response.body != "ok") {
+      return "error";
+    } else {
+      return "ok";
+    }
+  }
+
   Future<String> deleteComment(String id) async {
-    Response response = await http.post(Uri.parse(url + "deleteComment"),
-        headers: <String, String>{
-          'Content-Type': 'text/plain; charset=UTF-8',
-        },
-        body: id);
-    if (response.statusCode != 201 || response.body != "ok") {
+    Response response =
+        await http.delete(Uri.parse(url + "deleteComment/" + id));
+    if (response.statusCode != 202 || response.body != "ok") {
       return "error";
     } else {
       return "ok";

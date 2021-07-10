@@ -175,7 +175,6 @@ class _AccountPage extends State<AccountPage> {
               ),
             );
           } else if (snapshot.hasError) {
-            print(snapshot.error);
             return errorDisplay();
           }
           return SafeArea(

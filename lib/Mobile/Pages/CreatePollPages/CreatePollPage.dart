@@ -1,7 +1,10 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:public_poll/Controller/Domain.dart';
 import 'package:public_poll/Controller/PollRequests.dart';
+import 'package:public_poll/Controller/UserController.dart';
 import 'package:public_poll/Mobile/Pages/CreatePollPages/AnswerBox.dart';
 import 'package:public_poll/Mobile/Widgets/Essential/Error.dart';
 import 'package:public_poll/Mobile/Widgets/Essential/Header.dart';
@@ -25,13 +28,20 @@ Size size;
 List<Widget> answersComponents = List<Widget>();
 
 class CreatePollPage extends StatefulWidget {
+  final String userID;
+
+  CreatePollPage(this.userID);
+
   @override
-  State<StatefulWidget> createState() => _CreatePollPage();
+  State<StatefulWidget> createState() => _CreatePollPage(userID);
 }
 
 class _CreatePollPage extends State<CreatePollPage> {
+  String userID;
   bool isPriv;
   TextEditingController questionController = TextEditingController();
+
+  _CreatePollPage(this.userID);
 
   @override
   void initState() {
@@ -150,6 +160,12 @@ class _CreatePollPage extends State<CreatePollPage> {
     );
   }
 
+  /*
+  This is quite stupid and should be changed when 
+  I implement adding userID to the polls but rn just to get this done
+  Im going to make two requests. First is to create, second is to add it to 
+  users own polls.
+  */
   void createNewPoll() async {
     //If fails, doesn't cause issues with answer adding and deleting
     // ignore: deprecated_member_use
@@ -158,6 +174,7 @@ class _CreatePollPage extends State<CreatePollPage> {
     answerBoxes.removeAt(answerBoxes.length - 1);
 
     CreatePoll createPoll = CreatePoll(
+      uid: userID,
       question: questionController.text.toString(),
       answerBoxes: answerBoxes.cast<AnswerBox>(),
       isPrivatePoll: isPriv,
@@ -171,9 +188,12 @@ class _CreatePollPage extends State<CreatePollPage> {
     } else {
       poll.pollID = code;
       successMessage(poll);
+      
+      //Dumb and remove later
+      UserController userController = UserController();
+      await userController.addUserPolls(userID, code, 3);
     }
   }
-
 
   void errorMessage(String message) {
     showDialog(
@@ -225,7 +245,6 @@ class _CreatePollPage extends State<CreatePollPage> {
             ],
           );
         });
-    
   }
 
   Widget closeButton() {
@@ -251,8 +270,7 @@ class _CreatePollPage extends State<CreatePollPage> {
     return IconButton(
       icon: shareIcon,
       onPressed: () => Share.share(
-          "http://192.167.87.118:8082:8081/pollDisplay?id=" +
-              poll.pollID.toString()),
+          Domain.getWeb() + "/pollDisplay?id=" + poll.pollID.toString()),
     );
   }
 }

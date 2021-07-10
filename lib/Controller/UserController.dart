@@ -2,10 +2,11 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:http/http.dart';
+import 'package:public_poll/Controller/Domain.dart';
 import 'package:public_poll/Models/User.dart';
 
 class UserController {
-  String url = 'http://192.168.87.118:8081/PublicPollBackEnd/publicpoll/users/';
+  String url = Domain.getAPI() + 'users/';
 
   /* GET Requests*/
 
@@ -72,6 +73,24 @@ class UserController {
   List<User> listOfUsers(Map<String, dynamic> json) {
     var usersJson = json['users'] as List;
     return usersJson.map((userJson) => User.fromJson(userJson)).toList();
+  }
+
+  Future<String> addUserPolls(String uid, String pollID, int type) async {
+    Map<String, dynamic> json = {
+      'userID': uid,
+      'pollID': pollID,
+      'type': type,
+    };
+    Response response = await http.post(Uri.parse(url + "addUserPolls"),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(json));
+    if (response.statusCode != 201 || response.body != "ok") {
+      return "error";
+    } else {
+      return response.body;
+    }
   }
 }
 

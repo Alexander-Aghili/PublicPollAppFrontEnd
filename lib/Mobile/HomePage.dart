@@ -63,7 +63,7 @@ class _HomePage extends State<HomePage> {
       body: PageView(
         children: <Widget>[
           PollPage(),
-          CreatePollPage(),
+          CreatePollPage(uid),
           AccountPage(uid),
         ],
         controller: pageController,

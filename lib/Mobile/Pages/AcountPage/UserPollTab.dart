@@ -8,7 +8,7 @@ import 'package:public_poll/Models/User.dart';
 import 'package:public_poll/Style.dart';
 
 class UserPollTab extends StatefulWidget {
-  List<String> pollIDs;
+  final List<String> pollIDs;
   UserPollTab(this.pollIDs);
 
   @override
@@ -42,7 +42,6 @@ class _UserPollTab extends State<UserPollTab> {
             //Else
             return pollListView(polls, getPollsFromPollIDs, size);
           } else if (snapshot.hasError) {
-            print(snapshot.error);
             return errorDisplay();
           }
           return circularProgress();
