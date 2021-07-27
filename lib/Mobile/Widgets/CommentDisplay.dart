@@ -13,20 +13,27 @@ class CommentDisplay extends StatefulWidget {
   final User user;
   final PollComment comment;
   final bool isPostingUser;
+  final Function deleteComment;
+  final Key key;
 
-  CommentDisplay(this.user, this.comment, this.isPostingUser);
+  CommentDisplay(
+      this.user, this.comment, this.isPostingUser, this.deleteComment,
+      {this.key})
+      : super(key: key);
 
   @override
   State<StatefulWidget> createState() =>
-      _CommentDisplay(user, comment, isPostingUser);
+      _CommentDisplay(user, comment, isPostingUser, deleteComment);
 }
 
 class _CommentDisplay extends State<CommentDisplay> {
   User user;
   PollComment comment;
   bool isPostingUser;
+  Function deleteComment;
 
-  _CommentDisplay(this.user, this.comment, this.isPostingUser);
+  _CommentDisplay(
+      this.user, this.comment, this.isPostingUser, this.deleteComment);
 
   Size size;
 
@@ -140,6 +147,7 @@ class _CommentDisplay extends State<CommentDisplay> {
           String response =
               await pollRequests.deleteComment(comment.commentID.toString());
           if (response == "ok") {
+            deleteComment(comment);
             removedSnackBar("Comment Removed", context);
           } else {
             errorSnackBar("Error. Comment wasn't removed. Try again.", context);

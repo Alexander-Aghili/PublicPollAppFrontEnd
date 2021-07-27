@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:public_poll/Controller/Domain.dart';
 import 'package:public_poll/Controller/PollRequests.dart';
+import 'package:public_poll/Controller/UserController.dart';
 import 'package:public_poll/Mobile/Pages/HomePages/CommentPage.dart';
 import 'package:public_poll/Mobile/Pages/HomePages/StatisticsPage.dart';
 import 'package:public_poll/Mobile/Widgets/Alert.dart';
@@ -20,90 +21,80 @@ import 'Essential/MenuItem.dart';
  * Written by Alexander Aghili alexander.w.aghili@gmail.com, May 2021
  */
 
-/*
-PAIN
-TO DO:
--Fix Clicking to show all states for one click
--Add selecting your answer
--Add comments
--Fix length of issue and container size issue
--Add statistics
--Implement 3 dot menu items
--touch up
-*/
-
 class PollDisplay extends StatefulWidget {
   final Poll poll;
-  PollDisplay(this.poll);
+  final String userID;
+  PollDisplay(this.poll, this.userID, {@required Key key}) : super(key: key);
 
   @override
-  State<StatefulWidget> createState() => _PollDisplay(poll);
+  State<StatefulWidget> createState() => _PollDisplay(poll, userID);
 }
 
 class _PollDisplay extends State<PollDisplay> {
   Poll poll;
-  Color contrastColor;
-  Size size;
-  BuildContext context;
-  int totalVotes;
-  Widget rowState;
 
-  _PollDisplay(this.poll);
-
-  //Calculate for different screen widths, specifically the /42 number
-  int calculateLinesForQuestion() {
-    return (poll.pollQuestion.length / 42).floor().round();
-  }
-
-  int getTotalVotes() {
-    int votes = 0;
+  _PollDisplay(this.poll, this.userID) {
+    //Poll init
+    totalVotes = 0;
     for (int i = 0; i < poll.answers.length; i++) {
-      votes += poll.answers[i].userIDs.length;
+      PollAnswer answer = poll.answers[i];
+      totalVotes += answer.userIDs.length;
+
+      if (answer.userIDs.contains(userID)) {
+        selectedAnswer = answer.letter;
+      }
     }
-    return votes;
   }
 
+  bool isSaved;
+
+  Size size;
+  String selectedAnswer;
+  int totalVotes;
+  String userID;
+
+  Color contrastColor;
   /*
   Init state of poll, doesn't display data of poll, 
   that is a differnt dart class
   */
   @override
   Widget build(BuildContext context) {
-    totalVotes = getTotalVotes();
-    size = MediaQuery.of(context).size;
-    this.context = context;
     contrastColor =
         Theme.of(context).cupertinoOverrideTheme.primaryContrastingColor;
+    size = MediaQuery.of(context).size;
+
     return Container(
       decoration: BoxDecoration(
           color: Theme.of(context).backgroundColor,
           border: Border.all(color: contrastColor, width: 3),
           borderRadius: BorderRadius.all(Radius.circular(10.0))),
-      width: size.width,
-      height: size.height *
-          (.275 +
-              (.05 * poll.answers.length) +
-              (.025 * calculateLinesForQuestion())),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
-          questionRow(context),
-          answersColumn(context),
-          Spacer(),
+          questionRow(),
+          AnswerArea(poll, selectedAnswer, totalVotes, userID, poll.pollID),
           bottomDataRow(),
         ],
       ),
     );
   }
 
-  Row questionRow(BuildContext context) {
+  Future getSavedState() async {
+    if (isSaved != null) return isSaved;
+    UserController controller = UserController();
+    return await controller.checkUserPollExists(userID, poll.pollID, 1);
+  }
+
+  Row questionRow() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         if (poll.isPrivate)
-          Padding(
+          Container(
             padding:
                 EdgeInsets.only(left: size.width * .05, top: size.height * .02),
             child: Icon(
@@ -111,83 +102,112 @@ class _PollDisplay extends State<PollDisplay> {
               size: 23,
             ),
           ),
+        if (!poll.isPrivate)
+          Container(
+            padding:
+                EdgeInsets.only(left: size.width * .05, top: size.height * .02),
+          ),
         //For some fucking reason it isn't center and I wanna fucking kill this thing
         Expanded(
           flex: 20,
           child: Container(
             alignment: Alignment.center,
-            padding:
-                EdgeInsets.only(left: size.width * .1, top: size.height * .02),
+            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 20),
             child: Text(
               poll.pollQuestion,
               style: Styles.baseTextStyle(context, 25),
+              textAlign: TextAlign.center,
             ),
           ),
         ),
-        Spacer(),
-        PopupMenuButton(
-          color: Theme.of(context).primaryColor,
-          itemBuilder: (context) => <PopupMenuEntry>[
-            menuItem(
-              0,
-              "Save",
-              Icon(Icons.archive),
-              size: size,
-              context: context,
-            ),
-            PopupMenuDivider(),
-            if (false)
-              menuItem(
-                  1,
-                  "Report",
-                  Icon(
-                    Icons.report,
-                    color: Colors.red,
-                  ),
-                  color: Colors.red,
-                  size: size,
-                  context: context),
-            if (true)
-              menuItem(
-                  2,
-                  "Delete",
-                  Icon(
-                    Icons.delete,
-                    color: Colors.red,
-                  ),
-                  color: Colors.red,
-                  size: size,
-                  context: context),
-          ],
-          onSelected: (item) async {
-            PollRequests requests = PollRequests();
-            if (item == 1) {
-              showDialog(
-                  context: context,
-                  builder: (context) {
-                    return report(context, poll.pollID, "poll");
-                  });
-            } else if (item == 2) {
-              String response = await requests.deletePoll(poll.pollID);
-              if (response == "ok")
-                removedSnackBar("Poll Deleted", context);
-              else {
-                errorSnackBar(
-                    "Error. Could not delete poll. Try again.", context);
-              }
-            }
-          },
-        ),
-      ],
-    );
-  }
+        FutureBuilder(
+            future: getSavedState(),
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                isSaved = snapshot.data;
+                return PopupMenuButton(
+                  color: Theme.of(context).primaryColor,
+                  itemBuilder: (context) => <PopupMenuEntry>[
+                    if (!isSaved)
+                      menuItem(
+                        0,
+                        "Save",
+                        Icon(Icons.archive),
+                        size: size,
+                        context: context,
+                      ),
+                    if (isSaved)
+                      menuItem(
+                        0,
+                        "Unsave",
+                        Icon(Icons.crop),
+                        size: size,
+                        context: context,
+                      ),
+                    PopupMenuDivider(),
+                    if (userID != poll.creatorID)
+                      menuItem(
+                          1,
+                          "Report",
+                          Icon(
+                            Icons.report,
+                            color: Colors.red,
+                          ),
+                          color: Colors.red,
+                          size: size,
+                          context: context),
+                    if (userID == poll.creatorID)
+                      menuItem(
+                          2,
+                          "Delete",
+                          Icon(
+                            Icons.delete,
+                            color: Colors.red,
+                          ),
+                          color: Colors.red,
+                          size: size,
+                          context: context),
+                  ],
+                  onSelected: (item) async {
+                    if (item == 0 && !isSaved) {
+                      UserController controller = UserController();
+                      await controller.addUserPolls(userID, poll.pollID, 1);
+                      setState(() {
+                        isSaved = true;
+                      });
+                    }
+                    if (item == 0 && isSaved) {
+                      UserController controller = UserController();
+                      controller.deleteUserPoll(userID, poll.pollID, 1);
+                      setState(() {
+                        isSaved = false;
+                      });
+                    }
 
-  Widget answersColumn(BuildContext context) {
-    return PollAnswerDisplaySystem(
-      poll: poll,
-      size: size,
-      color: contrastColor,
-      totalVotes: totalVotes,
+                    PollRequests requests = PollRequests();
+                    if (item == 1) {
+                      showDialog(
+                          context: context,
+                          builder: (context) {
+                            return report(context, poll.pollID, "poll");
+                          });
+                    } else if (item == 2) {
+                      String response = await requests.deletePoll(poll.pollID);
+                      if (response == "ok")
+                        removedSnackBar("Poll Deleted", context);
+                      else {
+                        errorSnackBar(
+                            "Error. Could not delete poll. Try again.",
+                            context);
+                      }
+                    }
+                  },
+                );
+              }
+              return PopupMenuButton(
+                  itemBuilder: (context) => <PopupMenuEntry>[]);
+            }),
+      ],
     );
   }
 
@@ -251,220 +271,249 @@ class _PollDisplay extends State<PollDisplay> {
   }
 }
 
-class PollAnswerDisplaySystem extends StatefulWidget {
-  Poll poll;
-  Size size;
-  Color color;
-  int totalVotes;
+class AnswerArea extends StatefulWidget {
+  final Poll poll;
+  final String selectedAnswer;
+  final int totalVotes;
+  final String uid;
+  final String pid;
 
-  PollAnswerDisplaySystem({this.poll, this.size, this.color, this.totalVotes});
+  AnswerArea(
+      this.poll, this.selectedAnswer, this.totalVotes, this.uid, this.pid);
 
   @override
-  State<StatefulWidget> createState() => _PollAnswerDisplaySystem(
-        poll: poll,
-        size: size,
-        color: color,
-        totalVotes: totalVotes,
-      );
+  State<StatefulWidget> createState() =>
+      _AnswerArea(poll, selectedAnswer, totalVotes, uid, pid);
 }
 
-class _PollAnswerDisplaySystem extends State<PollAnswerDisplaySystem> {
+class _AnswerArea extends State<AnswerArea> {
   Poll poll;
-  Size size;
-  Color color;
+  String selectedAnswer;
   int totalVotes;
-  Function fuction;
+  String uid;
+  String pid;
 
-  _PollAnswerDisplaySystem({this.poll, this.size, this.color, this.totalVotes});
+  _AnswerArea(
+      this.poll, this.selectedAnswer, this.totalVotes, this.uid, this.pid);
 
-  @override
-  void initState() {
-    super.initState();
-    fuction = pollAnswerDisplayPercentage;
+  List<Widget> answerBoxes;
+
+  List<Widget> getAnswerBoxes() {
+    List<Widget> boxes = List<Widget>.empty(growable: true);
+
+    for (int i = 0; i < poll.answers.length; i++) {
+      boxes.add(AnswerBox(
+        poll.answers[i],
+        key: UniqueKey(),
+        notifyParent: updateWidget,
+        selectedAnswer: this.selectedAnswer,
+        totalVotes: this.totalVotes,
+        uid: this.uid,
+        pid: this.pid,
+      ));
+    }
+    return boxes;
+  }
+
+  void updateWidget(String answer) {
+    setState(() {
+      selectedAnswer = answer;
+      totalVotes += 1;
+      answerBoxes = getAnswerBoxes();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: <Widget>[
-        Padding(
-          padding: EdgeInsets.only(top: size.height * .015),
+    answerBoxes = getAnswerBoxes();
+
+    return ListView(
+      physics: const ScrollPhysics(),
+      shrinkWrap: true,
+      children: [
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: answerBoxes,
         ),
-        for (int i = 0; i < poll.answers.length; i++) fuction(i),
       ],
     );
   }
-
-  Widget pollAnswerBase(int pollAnswerNumber) {
-    PollAnswer answer = poll.answers[pollAnswerNumber];
-    PollAnswerDisplay display = getDisplay(answer, false);
-    return GestureDetector(
-      onTap: () => null,
-      child: display,
-    );
-  }
-
-  Widget pollAnswerDisplayPercentage(int pollAnswerNumber) {
-    PollAnswer answer = poll.answers[pollAnswerNumber];
-    PollAnswerDisplay display = getDisplay(answer, true);
-    return GestureDetector(
-      onTap: () => null,
-      child: display,
-    );
-  }
-
-  PollAnswerDisplay getDisplay(PollAnswer answer, bool showAnswers) {
-    return PollAnswerDisplay(
-      pollAnswer: answer,
-      size: size,
-      color: color,
-      context: context,
-      totalVotes: totalVotes,
-      showAnswers: showAnswers,
-    );
-  }
 }
 
-class PollAnswerDisplay extends StatefulWidget {
-  PollAnswer pollAnswer;
-  int totalVotes;
-  Size size;
-  Color color;
-  BuildContext context;
-  bool showAnswers;
+class AnswerBox extends StatefulWidget {
+  final PollAnswer answer;
+  final Function notifyParent;
+  final String selectedAnswer;
+  final int totalVotes;
+  final String uid;
+  final String pid;
 
-  PollAnswerDisplay({
-    @required this.pollAnswer,
-    @required this.size,
-    @required this.color,
-    @required this.context,
-    @required this.totalVotes,
-    @required this.showAnswers,
-  });
+  AnswerBox(this.answer,
+      {@required Key key,
+      @required this.notifyParent,
+      @required this.selectedAnswer,
+      @required this.totalVotes,
+      @required this.uid,
+      @required this.pid})
+      : super(key: key);
+
   @override
-  State<StatefulWidget> createState() => _PollAnswerDisplay(
-        pollAnswer: pollAnswer,
-        size: size,
-        color: color,
-        context: context,
-        totalVotes: totalVotes,
-        showAnswers: showAnswers,
-      );
+  State<StatefulWidget> createState() => _AnswerBox(
+      this.answer,
+      this.notifyParent,
+      this.selectedAnswer,
+      this.totalVotes,
+      this.uid,
+      this.pid);
 }
 
-class _PollAnswerDisplay extends State<PollAnswerDisplay> {
-  PollAnswer pollAnswer;
+class _AnswerBox extends State<AnswerBox> {
+  PollAnswer answer;
+  Function notifyParent;
+  String selectedAnswer;
   int totalVotes;
-  Size size;
-  Color color;
-  BuildContext context;
-  bool isSelected;
-  bool showAnswers;
+  String uid;
+  String pid;
 
-  _PollAnswerDisplay({
-    @required this.pollAnswer,
-    @required this.size,
-    @required this.color,
-    @required this.context,
-    @required this.totalVotes,
-    @required this.showAnswers,
-  });
+  _AnswerBox(this.answer, this.notifyParent, this.selectedAnswer,
+      this.totalVotes, this.uid, this.pid);
 
-  Container baseState() {
-    return Container(
-      margin: EdgeInsets.only(
-        top: size.height * .015,
-        bottom: size.height * .015,
-        left: size.width * .05,
-        right: size.width * .05,
-      ),
-      height: size.height * .055,
-      decoration: BoxDecoration(
-          border: Border.all(
-            color: color,
-          ),
-          borderRadius: BorderRadius.all(Radius.circular(20))),
-      child: _answerRow(),
-    );
+  Color borderColor;
+  Color backColor;
+  double borderWidth;
+
+  void changeBorder() {
+    borderColor = Colors.blue;
+    backColor = Colors.blue.shade200;
+    borderWidth = 5;
   }
 
-  Container answeredDisplay() {
-    return Container(
-      margin: EdgeInsets.only(
-        top: size.height * .015,
-        bottom: size.height * .015,
-        left: size.width * .05,
-        right: size.width * .05,
-      ),
-      height: size.height * .055,
+  void answerClicked() async {
+    if (selectedAnswer == null) {
+      PollRequests requests = PollRequests();
+      String response =
+          await requests.addUserResponseToPoll(uid, pid, answer.letter);
+
+      if (response == "duplicate") {
+        return;
+      }
+
+      if (response != "ok") {
+        errorSnackBar("Answer not logged.", context);
+        return;
+      }
+
+      UserController controller = UserController();
+      response = await controller.addUserPolls(uid, pid, 2);
+
+      if (response != "ok") {
+        errorSnackBar("Error saving", context);
+        return;
+      }
+
+      setState(() {
+        if (answer.userIDs == null || answer.userIDs.isEmpty) {
+          answer.userIDs = new List<String>.empty(growable: true);
+        }
+        answer.userIDs.add(uid);
+
+        selectedAnswer = answer.letter;
+        changeBorder();
+        notifyParent(answer.letter);
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Size size = MediaQuery.of(context).size;
+    if (selectedAnswer == answer.letter) {
+      changeBorder();
+    } else {
+      borderColor =
+          Theme.of(context).cupertinoOverrideTheme.primaryContrastingColor;
+      backColor = Theme.of(context).backgroundColor;
+      borderWidth = 1;
+    }
+
+    return Flexible(
       child: Row(
-        children: <Widget>[
-          _containerAnsweredState(),
-          Spacer(),
-          _percentageInformation(),
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            margin: EdgeInsets.symmetric(vertical: 10),
+            width: size.width * .8,
+            decoration: BoxDecoration(
+              color: backColor,
+              border: Border.all(
+                color: borderColor,
+                width: borderWidth,
+              ),
+              borderRadius: BorderRadius.all(Radius.circular(20)),
+            ),
+            child: GestureDetector(
+              onTap: answerClicked,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      vertical: 15,
+                      horizontal: 10,
+                    ),
+                    child: Text(
+                      answer.letter + ")",
+                      style: Styles.baseTextStyle(context, 20),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 7,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 10),
+                      child: Text(
+                        answer.answer,
+                        style: Styles.baseTextStyle(context, 20),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    width: 35,
+                    child: Text(""),
+                  ), //Empty container to not press the text up again the corner of the box
+                ],
+              ),
+            ),
+          ),
+          if (selectedAnswer != null)
+            Container(
+              alignment: Alignment.center,
+              padding: EdgeInsets.only(left: 10),
+              width: size.width * .125,
+              child: Text(
+                getVotePercentage(answer.userIDs.length),
+                style: Styles.baseTextStyle(context, 14),
+              ),
+            ),
         ],
       ),
     );
   }
 
-  Container _containerAnsweredState() {
-    return Container(
-      width: size.width * .75,
-      height: size.height * .055,
-      decoration: BoxDecoration(
-          border: Border.all(
-            color: color,
-          ),
-          borderRadius: BorderRadius.all(Radius.circular(20))),
-      child: _answerRow(),
-    );
-  }
-
-  Row _answerRow() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: <Widget>[
-        Padding(
-          padding: EdgeInsets.only(left: size.width * .025),
-          child: Text(
-            pollAnswer.letter + ") ",
-            style: Styles.baseTextStyle(context, 22),
-          ),
-        ),
-        Padding(
-          padding: EdgeInsets.only(left: size.width * .05),
-          child: Text(
-            pollAnswer.answer,
-            style: Styles.baseTextStyle(context, 24),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Container _percentageInformation() {
-    int percentage;
+  String getVotePercentage(int votes) {
+    String percentage;
     try {
-      percentage = ((pollAnswer.userIDs.length / totalVotes) * 100).toInt();
+      double dec = votes / totalVotes;
+      if (dec.isNaN) throw Exception();
+      percentage = (100 * (dec)).toStringAsFixed(2);
     } catch (e) {
-      percentage = 0;
+      percentage = "0";
     }
-    return Container(
-      child: Text(
-        percentage.toString() + "%",
-        style: Styles.baseTextStyle(context, 25),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (!showAnswers)
-      return baseState();
-    else
-      return answeredDisplay();
+    return percentage += "%";
   }
 }

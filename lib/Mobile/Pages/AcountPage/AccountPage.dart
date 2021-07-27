@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:public_poll/Authentication/SignInPage.dart';
+import 'package:public_poll/Controller/Domain.dart';
 import 'package:public_poll/Controller/UserController.dart';
 import 'package:public_poll/Mobile/Pages/AcountPage/AccountHeader.dart';
 import 'package:public_poll/Mobile/Pages/AcountPage/UserPollTab.dart';
@@ -7,7 +8,6 @@ import 'package:public_poll/Mobile/Widgets/Essential/Error.dart';
 import 'package:public_poll/Mobile/Widgets/Essential/LoadingAction.dart';
 import 'package:public_poll/Mobile/Widgets/Essential/MenuItem.dart';
 import 'package:public_poll/Models/User.dart';
-import 'package:public_poll/url_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -32,8 +32,8 @@ class _AccountPage extends State<AccountPage> {
   _AccountPage(this.uid);
 
   //URLS
-  String reportBugUrl = web_base_url + "/bugReport";
-  String contactUsUrl = web_base_url + "/contactUs";
+  String reportBugUrl = Domain.getWeb() + "bugReport";
+  String contactUsUrl = Domain.getWeb() + "contactUs";
 
   Future<User> getUserFromID() async {
     UserController userController = UserController();
@@ -108,19 +108,19 @@ class _AccountPage extends State<AccountPage> {
       ],
       onSelected: (item) async => {
         if (item == 0)
-        {}
+          {}
         else if (item == 1)
-        {
-          await canLaunch(reportBugUrl)
-              ? launch(reportBugUrl)
-              : throw 'Could not launch $reportBugUrl',
-        }
-        else if (item == 2) 
-        {
-          await canLaunch(contactUsUrl)
-            ? launch(contactUsUrl)
-            : throw 'Could not launch $contactUsUrl',
-        }
+          {
+            await canLaunch(reportBugUrl)
+                ? launch(reportBugUrl)
+                : throw 'Could not launch $reportBugUrl',
+          }
+        else if (item == 2)
+          {
+            await canLaunch(contactUsUrl)
+                ? launch(contactUsUrl)
+                : throw 'Could not launch $contactUsUrl',
+          }
         else if (item == 4)
           {
             await logout(),
@@ -164,9 +164,9 @@ class _AccountPage extends State<AccountPage> {
                     Expanded(
                       child: TabBarView(
                         children: <Widget>[
-                          UserPollTab(user.savedPollsID),
-                          UserPollTab(user.recentlyRespondedToPollsID),
-                          UserPollTab(user.myPollsID),
+                          UserPollTab(user.savedPollsID, uid),
+                          UserPollTab(user.recentlyRespondedToPollsID, uid),
+                          UserPollTab(user.myPollsID, uid),
                         ],
                       ),
                     ),
@@ -175,7 +175,8 @@ class _AccountPage extends State<AccountPage> {
               ),
             );
           } else if (snapshot.hasError) {
-            return errorDisplay();
+            print(snapshot.error);
+            return SafeArea(child: errorDisplay());
           }
           return SafeArea(
             top: true,

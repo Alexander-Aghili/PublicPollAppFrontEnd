@@ -188,7 +188,7 @@ class _CreatePollPage extends State<CreatePollPage> {
     } else {
       poll.pollID = code;
       successMessage(poll);
-      
+
       //Dumb and remove later
       UserController userController = UserController();
       await userController.addUserPolls(userID, code, 3);
@@ -270,7 +270,7 @@ class _CreatePollPage extends State<CreatePollPage> {
     return IconButton(
       icon: shareIcon,
       onPressed: () => Share.share(
-          Domain.getWeb() + "/pollDisplay?id=" + poll.pollID.toString()),
+          Domain.getWeb() + "pollDisplay?id=" + poll.pollID.toString()),
     );
   }
 }

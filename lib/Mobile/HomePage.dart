@@ -62,7 +62,7 @@ class _HomePage extends State<HomePage> {
     return Scaffold(
       body: PageView(
         children: <Widget>[
-          PollPage(),
+          PollPage(uid),
           CreatePollPage(uid),
           AccountPage(uid),
         ],

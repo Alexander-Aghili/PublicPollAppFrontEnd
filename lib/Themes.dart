@@ -29,24 +29,38 @@ ThemeData darkMode() {
     ),
     focusColor: Colors.grey.shade800,
     accentColor: Colors.grey.shade300,
+    textSelectionTheme: darkModeTextSelectionTheme(),
+  );
+}
+
+TextSelectionThemeData darkModeTextSelectionTheme() {
+  return TextSelectionThemeData(
+    cursorColor: Colors.white,
   );
 }
 
 ThemeData lightMode() {
   return ThemeData(
-      brightness: Brightness.light,
-      cupertinoOverrideTheme: CupertinoThemeData(
-        barBackgroundColor: Colors.white10,
-        primaryColor: CupertinoColors.darkBackgroundGray,
-        primaryContrastingColor: Colors.black,
-      ),
-      backgroundColor: Colors.white,
-      primaryColor: Colors.white,
-      hintColor: Colors.black,
-      dialogTheme: DialogTheme(
-        backgroundColor: Colors.blue,
-      ),
-      focusColor: Colors.grey.shade300,
-      accentColor: Colors.grey.shade800,
-    );
+    brightness: Brightness.light,
+    cupertinoOverrideTheme: CupertinoThemeData(
+      barBackgroundColor: Colors.white10,
+      primaryColor: CupertinoColors.darkBackgroundGray,
+      primaryContrastingColor: Colors.black,
+    ),
+    backgroundColor: Colors.white,
+    primaryColor: Colors.white,
+    hintColor: Colors.black,
+    dialogTheme: DialogTheme(
+      backgroundColor: Colors.blue,
+    ),
+    focusColor: Colors.grey.shade300,
+    accentColor: Colors.grey.shade800,
+    textSelectionTheme: lightModeTextSelectionTheme(),
+  );
+}
+
+TextSelectionThemeData lightModeTextSelectionTheme() {
+  return TextSelectionThemeData(
+    cursorColor: Colors.black,
+  );
 }

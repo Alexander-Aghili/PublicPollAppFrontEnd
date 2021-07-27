@@ -20,8 +20,8 @@ class PollRequests {
     }
   }
 
-  Future<List<Poll>> getPolls() async {
-    Response response = await http.get(Uri.parse(url + 'getPolls'));
+  Future<List<Poll>> getPolls(String userID) async {
+    Response response = await http.get(Uri.parse(url + 'getPolls/' + userID));
     if (response.statusCode == 200) {
       return listOfPolls(jsonDecode(response.body));
     } else {
@@ -55,7 +55,7 @@ class PollRequests {
     }
   }
 
-  Future<List<Poll>> getPollsFromPollIDs(List<String> pollIDs) async {
+  Future<List<Poll>> getPollsFromPollIDs(List<String> pollIDs, bool getTime) async {
     String body = '{ "pollIDs": ' + jsonEncode(pollIDs) + '}';
     Response response = await http.post(
       Uri.parse(url + "getPollsFromPollIDs"),
@@ -80,6 +80,30 @@ class PollRequests {
       },
       body: jsonEncode(comment.toJsonSend()),
     );
+    if (response.statusCode != 201 || response.body != "ok") {
+      return "error";
+    } else {
+      return "ok";
+    }
+  }
+
+  Future<String> addUserResponseToPoll(
+      String uid, String pollID, String letter) async {
+    String json = '{"userID": "' +
+        uid +
+        '", "pollID": "' +
+        pollID +
+        '", "letter": "' +
+        letter +
+        '"}';
+    Response response = await http.post(
+      Uri.parse(url + "addUserResponseToPoll"),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: json,
+    );
+    
     if (response.statusCode != 201 || response.body != "ok") {
       return "error";
     } else {

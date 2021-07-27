@@ -20,6 +20,27 @@ class UserController {
     }
   }
 
+  Future<bool> checkUserPollExists(
+      String userID, String pollID, int type) async {
+    Response response = await http.get(Uri.parse(url +
+        "checkUserPoll/" +
+        pollID +
+        "/" +
+        userID +
+        "/" +
+        type.toString()));
+    if (response.statusCode == 200) {
+      String boolString = response.body;
+      if (boolString == "true") {
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      throw Exception("Couldn't load if user poll exists");
+    }
+  }
+
   /* POST Requests */
 
   Future<String> createUser(User user) async {
@@ -90,6 +111,22 @@ class UserController {
       return "error";
     } else {
       return response.body;
+    }
+  }
+
+  /* @DELETE */
+  Future<String> deleteUserPoll(String userID, String pollID, int type) async {
+    Response response = await http.delete(Uri.parse(url +
+        "deleteUserPoll/" +
+        pollID +
+        "/" +
+        userID +
+        "/" +
+        type.toString()));
+    if (response.statusCode != 202 || response.body != "ok") {
+      return "error";
+    } else {
+      return "ok";
     }
   }
 }

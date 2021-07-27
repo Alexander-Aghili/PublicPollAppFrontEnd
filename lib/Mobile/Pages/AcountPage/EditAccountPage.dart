@@ -15,10 +15,23 @@ class _EditAccountPage extends State<EditAccountPage> {
   User user;
   _EditAccountPage(this.user);
 
+  GlobalKey<FormState> key = GlobalKey<FormState>();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
+      body: ListView(
+        physics: const ScrollPhysics(),
+        children: [
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

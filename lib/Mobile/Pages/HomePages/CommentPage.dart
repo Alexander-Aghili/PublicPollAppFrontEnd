@@ -37,6 +37,9 @@ class _CommentPage extends State<CommentPage> {
   OutlineInputBorder commentBorder;
   Size size;
 
+  List<Widget> commentDisplays;
+  List<User> users;
+
   String uid;
 
   Future<List<User>> getUsers() async {
@@ -80,6 +83,7 @@ class _CommentPage extends State<CommentPage> {
         future: getUsers(),
         builder: (context, snapshot) {
           if (snapshot.hasData) {
+            users = snapshot.data;
             return Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -90,7 +94,7 @@ class _CommentPage extends State<CommentPage> {
                   ),
                 if (snapshot.data.isNotEmpty)
                   Expanded(
-                    child: commentListView(snapshot.data),
+                    child: commentListView(),
                   ),
                 commentBar(),
                 Padding(padding: EdgeInsets.only(bottom: 25))
@@ -106,7 +110,8 @@ class _CommentPage extends State<CommentPage> {
     );
   }
 
-  Widget commentListView(List<User> users) {
+  Widget commentListView() {
+    commentDisplays = getCommentDisplays();
     return ListView(
       physics: const ScrollPhysics(),
       shrinkWrap: true,
@@ -115,18 +120,31 @@ class _CommentPage extends State<CommentPage> {
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
-          children: getCommentDisplays(users),
+          children: commentDisplays,
         ),
       ],
     );
   }
 
-  List<Widget> getCommentDisplays(List<User> users) {
+  void deleteComment(PollComment comment) {
+    setState(() {
+      comments.remove(comment);
+      commentDisplays = getCommentDisplays();
+    });
+  }
+
+  List<Widget> getCommentDisplays() {
     List<Widget> commentDisplays = new List<Widget>.empty(growable: true);
     for (int i = 0; i < comments.length; i++) {
       try {
         bool isPostingUser = users[i].userID == uid;
-        commentDisplays.add(CommentDisplay(users[i], comments[i], isPostingUser));
+        commentDisplays.add(CommentDisplay(
+          users[i],
+          comments[i],
+          isPostingUser,
+          deleteComment,
+          key: UniqueKey(),
+        ));
       } catch (e) {}
     }
     return commentDisplays;
