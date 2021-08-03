@@ -16,6 +16,9 @@ void main() {
   runApp(MyApp());
 }
 
+
+//useful
+//https://dev.to/carminezacc/advanced-flutter-networking-part-1-uploading-a-file-to-a-rest-api-from-flutter-using-a-multi-part-form-data-post-request-2ekm
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override

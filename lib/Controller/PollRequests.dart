@@ -55,7 +55,8 @@ class PollRequests {
     }
   }
 
-  Future<List<Poll>> getPollsFromPollIDs(List<String> pollIDs, bool getTime) async {
+  Future<List<Poll>> getPollsFromPollIDs(
+      List<String> pollIDs, bool getTime) async {
     String body = '{ "pollIDs": ' + jsonEncode(pollIDs) + '}';
     Response response = await http.post(
       Uri.parse(url + "getPollsFromPollIDs"),
@@ -80,10 +81,11 @@ class PollRequests {
       },
       body: jsonEncode(comment.toJsonSend()),
     );
-    if (response.statusCode != 201 || response.body != "ok") {
+    print(response.body.toString());
+    if (response.statusCode != 201 || response.body.indexOf(" ") != -1) {
       return "error";
     } else {
-      return "ok";
+      return response.body;
     }
   }
 
@@ -103,7 +105,7 @@ class PollRequests {
       },
       body: json,
     );
-    
+
     if (response.statusCode != 201 || response.body != "ok") {
       return "error";
     } else {
@@ -115,7 +117,7 @@ class PollRequests {
   Future<String> deletePoll(String pollID) async {
     Response response =
         await http.delete(Uri.parse(url + "deletePoll/" + pollID));
-        
+
     if (response.statusCode != 202 || response.body != "ok") {
       return "error";
     } else {

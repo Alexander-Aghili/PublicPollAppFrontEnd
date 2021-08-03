@@ -42,7 +42,7 @@ AlertDialog report(BuildContext context, String id, String type) {
     title: Center(
       child: Text("Report", style: TextStyle(color: Colors.red)),
     ),
-    content: Flexible(
+    content: Container(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,

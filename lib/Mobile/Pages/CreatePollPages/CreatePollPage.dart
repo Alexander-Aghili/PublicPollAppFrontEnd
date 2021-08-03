@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:public_poll/Controller/Domain.dart';
 import 'package:public_poll/Controller/PollRequests.dart';
 import 'package:public_poll/Controller/UserController.dart';
@@ -154,7 +153,7 @@ class _CreatePollPage extends State<CreatePollPage> {
         child: Text(
           "Create Poll",
           style: Styles.baseTextStyleWithColor(
-              context, 30, Theme.of(context).primaryColor),
+              context, 30, Colors.white),
         ),
       ),
     );

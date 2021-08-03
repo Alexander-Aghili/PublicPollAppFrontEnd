@@ -19,7 +19,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 class CommentPage extends StatefulWidget {
   final List<PollComment> comments;
   final String pollID;
-  CommentPage({@required this.comments, @required this.pollID});
+  CommentPage({
+    @required this.comments,
+    @required this.pollID,
+  });
 
   @override
   State<StatefulWidget> createState() =>
@@ -37,10 +40,18 @@ class _CommentPage extends State<CommentPage> {
   OutlineInputBorder commentBorder;
   Size size;
 
+  Future futureData;
+
   List<Widget> commentDisplays;
   List<User> users;
 
   String uid;
+
+  @override
+  void initState() {
+    super.initState();
+    futureData = getUsers();
+  }
 
   Future<List<User>> getUsers() async {
     //Get this userID
@@ -56,8 +67,8 @@ class _CommentPage extends State<CommentPage> {
     for (int i = 0; i < comments.length; i++) {
       userIDs.add(comments[i].user);
     }
-
-    return await controller.getUsersFromIDs(userIDs);
+    List<User> users = await controller.getUsersFromIDs(userIDs);
+    return users;
   }
 
   @override
@@ -80,7 +91,7 @@ class _CommentPage extends State<CommentPage> {
           eliminateBackButton: false),
       backgroundColor: Theme.of(context).primaryColor,
       body: FutureBuilder<List<User>>(
-        future: getUsers(),
+        future: futureData,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             users = snapshot.data;
@@ -111,7 +122,7 @@ class _CommentPage extends State<CommentPage> {
   }
 
   Widget commentListView() {
-    commentDisplays = getCommentDisplays();
+    commentDisplays = getCommentDisplays(users);
     return ListView(
       physics: const ScrollPhysics(),
       shrinkWrap: true,
@@ -129,23 +140,29 @@ class _CommentPage extends State<CommentPage> {
   void deleteComment(PollComment comment) {
     setState(() {
       comments.remove(comment);
-      commentDisplays = getCommentDisplays();
+      if (comment.commentID != 0) {
+        users.removeWhere((element) => element.commentID == comment.commentID);
+      }
+      commentDisplays = getCommentDisplays(users);
     });
   }
 
-  List<Widget> getCommentDisplays() {
+  List<Widget> getCommentDisplays(List<User> userList) {
     List<Widget> commentDisplays = new List<Widget>.empty(growable: true);
     for (int i = 0; i < comments.length; i++) {
       try {
-        bool isPostingUser = users[i].userID == uid;
+        users[i].commentID = comments[i].commentID;
+        bool isPostingUser = userList[i].userID == uid;
         commentDisplays.add(CommentDisplay(
-          users[i],
+          userList[i],
           comments[i],
           isPostingUser,
           deleteComment,
           key: UniqueKey(),
         ));
-      } catch (e) {}
+      } catch (e) {
+        //Error occurs here once during rebuild but then works
+      }
     }
     return commentDisplays;
   }
@@ -198,8 +215,17 @@ class _CommentPage extends State<CommentPage> {
             );
           });
     } else {
+
+      comment.commentID = int.parse(id);
       setState(() {
         comments.add(comment);
+      });
+
+      futureData = getUsers();
+      users = await futureData;
+      
+      setState(() {
+        commentDisplays = getCommentDisplays(users);
         commentController.clear();
       });
     }

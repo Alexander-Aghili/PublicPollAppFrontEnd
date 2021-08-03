@@ -2,7 +2,9 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:public_poll/Controller/PollRequests.dart';
+import 'package:public_poll/Mobile/Pages/AcountPage/AccountPage.dart';
 import 'package:public_poll/Mobile/Widgets/Alert.dart';
+import 'package:public_poll/Mobile/Widgets/Essential/Avatar.dart';
 import 'package:public_poll/Models/PollComment.dart';
 import 'package:public_poll/Models/User.dart';
 
@@ -73,19 +75,42 @@ class _CommentDisplay extends State<CommentDisplay> {
     );
   }
 
+  Image getAvatarForComment() {
+    Image avatar;
+    if (user.profilePictureLink == null || user.profilePictureLink == "") {
+      avatar = Image.asset("assets/images/default_user_image.jpg");
+    } else {
+      if (user.profilePicture == null) {
+        print("Making Request");
+        avatar = Image.network(user.profilePictureLink);
+        setState(() {
+          user.profilePicture = avatar;
+        });
+      } else {
+        avatar = user.profilePicture;
+      }
+    }
+    return avatar;
+  }
+
   Widget avatarArea() {
-    return Flexible(
+    Image avatar = getAvatarForComment();
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(context,
+            MaterialPageRoute(builder: (context) => AccountPage(user, false, null)));
+      },
       child: Padding(
         padding: EdgeInsets.only(
           left: 7.5,
           right: 7.5,
           top: 20,
         ),
-        child: CircleAvatar(
-          radius: 20,
-          backgroundImage:
-              Image.asset("assets/images/default_user_image.jpg").image,
-        ),
+        child: getAvatar(
+            avatar,
+            /*Find a way to cache this and prevent reload on rebuild*/
+            20,
+            false),
       ),
     );
   }

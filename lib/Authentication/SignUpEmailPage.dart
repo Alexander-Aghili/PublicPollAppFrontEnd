@@ -6,6 +6,7 @@ import 'package:public_poll/Controller/UserController.dart';
 import 'package:public_poll/Mobile/HomePage.dart';
 import 'package:public_poll/Mobile/Widgets/Essential/Header.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:public_poll/Mobile/Widgets/FormFields.dart';
 import 'package:public_poll/Models/User.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../Style.dart';
@@ -16,23 +17,6 @@ EdgeInsets defaultSignUpPadding() {
     vertical: size.height * .015,
     horizontal: size.width * .05,
   );
-}
-
-/*
-  Field Area for each TextFormField, is stored in a list from main page.
-*/
-class FieldArea extends StatelessWidget {
-  final TextFormField field;
-
-  FieldArea({@required this.field});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: defaultSignUpPadding(),
-      child: field,
-    );
-  }
 }
 
 class SignUpEmailPage extends StatefulWidget {
@@ -53,57 +37,15 @@ class _SignUpEmailPage extends State<SignUpEmailPage> {
   String birthdayString;
   String gender;
   CircleAvatar avatar;
+  File userProfileImage;
 
   @override
   void initState() {
     super.initState();
     changeBirthday(DateTime.now());
 
-    //First Name Field
-    formFields.add(FieldArea(
-        field: createField(
-            false, new TextEditingController(), "First Name", nameValidator)));
-
-    //Last Name Field
-    formFields.add(FieldArea(
-        field: createField(
-            false, new TextEditingController(), "Last Name", nameValidator)));
-
-    //Email Form Field
-    formFields.add(FieldArea(
-        field: createField(
-            false, new TextEditingController(), "Email", emailValidator)));
-
-    //Username Form Field
-    formFields.add(FieldArea(
-        field: createField(false, new TextEditingController(), "Username",
-            usernameValidator)));
-
-    //Password Form Field
-    formFields.add(FieldArea(
-        field: createField(
-            true, new TextEditingController(), "Password", passwordValidator)));
-
-    //Password confirmation Field
-    formFields.add(FieldArea(
-        field: createField(true, new TextEditingController(),
-            "Password Confirmation", passwordValidator)));
-
     avatar = dynamicAvatar(
         Image.asset("assets/images/default_user_image.jpg").image);
-  }
-
-  TextFormField createField(bool secureText, TextEditingController controller,
-      String inputText, Function validator) {
-    return TextFormField(
-      obscureText: secureText,
-      controller: controller,
-      decoration: InputDecoration(
-        border: OutlineInputBorder(),
-        labelText: inputText,
-      ),
-      validator: (value) => validator(value),
-    );
   }
 
   Widget birthdayField() {
@@ -299,10 +241,11 @@ class _SignUpEmailPage extends State<SignUpEmailPage> {
               birthday: birthday,
               gender: gender,
               key: _key,
-              context: context);
+              context: context,
+              userProfileImage: userProfileImage);
           bool isValid = await user.validateInfo();
           if (isValid) {
-            await user.createPoll();
+            await user.createUser();
           }
         },
         child: Text(
@@ -319,6 +262,38 @@ class _SignUpEmailPage extends State<SignUpEmailPage> {
   @override
   Widget build(BuildContext context) {
     size = MediaQuery.of(context).size;
+
+    if (formFields.isEmpty) {
+        //First Name Field
+        formFields.add(FieldArea(size,
+            field: createField(false, new TextEditingController(), "First Name",
+                nameValidator)));
+
+        //Last Name Field
+        formFields.add(FieldArea(size,
+            field: createField(
+                false, new TextEditingController(), "Last Name", nameValidator)));
+
+        //Email Form Field
+        formFields.add(FieldArea(size,
+            field: createField(
+                false, new TextEditingController(), "Email", emailValidator)));
+
+        //Username Form Field
+        formFields.add(FieldArea(size,
+            field: createField(false, new TextEditingController(), "Username",
+                usernameValidator)));
+
+        //Password Form Field
+        formFields.add(FieldArea(size,
+            field: createField(true, new TextEditingController(), "Password",
+                passwordValidator)));
+
+        //Password confirmation Field
+        formFields.add(FieldArea(size,
+            field: createField(true, new TextEditingController(),
+                "Password Confirmation", passwordValidator)));
+      }
     return Scaffold(
       appBar: header(
         context: context,
@@ -363,7 +338,8 @@ class _SignUpEmailPage extends State<SignUpEmailPage> {
     PickedFile image =
         // ignore: invalid_use_of_visible_for_testing_member
         await ImagePicker.platform.pickImage(source: ImageSource.gallery);
-    return File(image.path);
+    userProfileImage = File(image.path);
+    return userProfileImage;
   }
 }
 
@@ -392,14 +368,16 @@ class CreateUser {
   BuildContext context;
   UserController requests = UserController();
   GlobalKey<FormState> key;
+  File userProfileImage;
 
   CreateUser(
       {@required this.fields,
       @required this.birthday,
       @required this.gender,
       @required this.key,
-      @required this.context}) {
-    List<String> inputs = List<String>();
+      @required this.context,
+      @required this.userProfileImage}) {
+    List<String> inputs = List<String>.empty(growable: true);
     for (int i = 0; i < fields.length; i++) {
       inputs.add(fields[i].field.controller.text.toString());
     }
@@ -458,7 +436,7 @@ class CreateUser {
         });
   }
 
-  Future createPoll() async {
+  Future createUser() async {
     User user = new User(
         username: username,
         email: email,
@@ -467,17 +445,22 @@ class CreateUser {
         lastname: lastName,
         gender: gender,
         password: password,
-        profilePictureLink: "");
-    String UID = await requests.createUser(user);
-    if (UID.isEmpty || UID.indexOf(" ") != -1) {
+        profilePictureLink: ""); //always starts blank, edited after
+    String uid = await requests.createUser(user);
+    if (uid.isEmpty || uid.indexOf(" ") != -1) {
       popup("Error! Try again.");
     } else {
       //Stay logged in
       SharedPreferences preferences = await SharedPreferences.getInstance();
-      preferences.setString("UID", UID);
+      preferences.setString("UID", uid);
+
+      if (userProfileImage.path != null) {
+        UserController controller = UserController();
+        await controller.uploadProfileImage(userProfileImage, uid, false);
+      }
 
       Navigator.pushReplacement(
-          context, new MaterialPageRoute(builder: (context) => HomePage(UID)));
+          context, new MaterialPageRoute(builder: (context) => HomePage(uid)));
     }
   }
 }

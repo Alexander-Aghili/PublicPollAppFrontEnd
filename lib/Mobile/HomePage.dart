@@ -1,6 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:public_poll/Controller/PollRequests.dart';
+import 'package:public_poll/Controller/UserController.dart';
+import 'package:public_poll/Mobile/Widgets/Essential/SplashScreen.dart';
+import 'package:public_poll/Models/Poll.dart';
+import 'package:public_poll/Models/User.dart';
 
 import 'Pages/AcountPage/AccountPage.dart';
 import 'Pages/CreatePollPages/CreatePollPage.dart';
@@ -14,7 +19,7 @@ import 'Pages/HomePages/PollPage.dart';
  */
 
 class HomePage extends StatefulWidget {
-  String uid;
+  final String uid;
 
   HomePage(this.uid);
 
@@ -27,11 +32,36 @@ class _HomePage extends State<HomePage> {
   int pageIndex = 0;
   String uid;
 
+  Future accountData;
+  Future homePageData;
+
   _HomePage({this.uid});
+
+  Future<User> getUserFromID() async {
+    UserController userController = UserController();
+    return await userController.getUserByID(uid);
+  }
+
+  Future<List<Poll>> getPollsRandom() async {
+    PollRequests request = PollRequests();
+    return await request.getPolls(uid);
+  }
+
+  Future updatePolls() async {
+    homePageData = getPollsRandom();
+    return await homePageData;
+  }
+
+  Future updateUser() async {
+    accountData = getUserFromID();
+    return await accountData;
+  }
 
   void initState() {
     super.initState();
     pageController = PageController();
+    accountData = getUserFromID();
+    homePageData = getPollsRandom();
   }
 
   void dispose() {
@@ -43,7 +73,6 @@ class _HomePage extends State<HomePage> {
     setState(() {
       this.pageIndex = pageNumber;
     });
-    if (pageIndex == 0) {}
   }
 
   void onTapChangePage(int pageNumber) {
@@ -59,26 +88,47 @@ class _HomePage extends State<HomePage> {
         statusBarBrightness:
             Theme.of(context).brightness // Dark == white status bar -- for IOS.
         ));
-    return Scaffold(
-      body: PageView(
-        children: <Widget>[
-          PollPage(uid),
-          CreatePollPage(uid),
-          AccountPage(uid),
-        ],
-        controller: pageController,
-        onPageChanged: pageChanged,
-        physics: NeverScrollableScrollPhysics(),
-      ),
-      bottomNavigationBar: CupertinoTabBar(
-        currentIndex: pageIndex,
-        onTap: onTapChangePage,
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.home)),
-          BottomNavigationBarItem(icon: Icon(Icons.add_box_outlined, size: 35)),
-          BottomNavigationBarItem(icon: Icon(Icons.account_circle_outlined))
-        ],
-      ),
-    );
+    return FutureBuilder(
+        future: accountData,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            User user = snapshot.data;
+            return FutureBuilder(
+                future: homePageData,
+                builder: (context, snapshot) {
+                  if (snapshot.hasData || snapshot.hasError) {
+                    return Scaffold(
+                      body: PageView(
+                        children: <Widget>[
+                          if (snapshot.hasError)
+                            PollPage(user, new List<Poll>.empty(growable: true),
+                                updatePolls),
+                          if (!snapshot.hasError)
+                            PollPage(user, snapshot.data, updatePolls),
+                          CreatePollPage(uid),
+                          AccountPage(user, true, updateUser),
+                        ],
+                        controller: pageController,
+                        onPageChanged: pageChanged,
+                        physics: NeverScrollableScrollPhysics(),
+                      ),
+                      bottomNavigationBar: CupertinoTabBar(
+                        currentIndex: pageIndex,
+                        onTap: onTapChangePage,
+                        items: const <BottomNavigationBarItem>[
+                          BottomNavigationBarItem(icon: Icon(Icons.home)),
+                          BottomNavigationBarItem(
+                              icon: Icon(Icons.add_box_outlined, size: 35)),
+                          BottomNavigationBarItem(
+                              icon: Icon(Icons.account_circle_outlined))
+                        ],
+                      ),
+                    );
+                  }
+                  return splashScreen(context);
+                });
+          }
+          return splashScreen(context);
+        });
   }
 }

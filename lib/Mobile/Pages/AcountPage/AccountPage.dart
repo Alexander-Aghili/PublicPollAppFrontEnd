@@ -3,10 +3,10 @@ import 'package:public_poll/Authentication/SignInPage.dart';
 import 'package:public_poll/Controller/Domain.dart';
 import 'package:public_poll/Controller/UserController.dart';
 import 'package:public_poll/Mobile/Pages/AcountPage/AccountHeader.dart';
+import 'package:public_poll/Mobile/Pages/AcountPage/EditAccountPage.dart';
 import 'package:public_poll/Mobile/Pages/AcountPage/UserPollTab.dart';
-import 'package:public_poll/Mobile/Widgets/Essential/Error.dart';
-import 'package:public_poll/Mobile/Widgets/Essential/LoadingAction.dart';
 import 'package:public_poll/Mobile/Widgets/Essential/MenuItem.dart';
+import 'package:public_poll/Models/KeyValue.dart';
 import 'package:public_poll/Models/User.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -19,17 +19,22 @@ import 'package:url_launcher/url_launcher.dart';
  */
 
 class AccountPage extends StatefulWidget {
-  String uid;
-  AccountPage(this.uid);
+  final User user;
+  final bool isUserAccount;
+  final Function updateAccountInfo;
+  AccountPage(this.user, this.isUserAccount, this.updateAccountInfo);
   @override
-  State<StatefulWidget> createState() => _AccountPage(uid);
+  State<StatefulWidget> createState() =>
+      _AccountPage(user, isUserAccount, updateAccountInfo);
 }
 
 class _AccountPage extends State<AccountPage> {
-  String uid;
   bool isUserAccount;
   Size size;
-  _AccountPage(this.uid);
+  Image profileImage;
+  User user;
+  Function updateAccountInfo;
+  _AccountPage(this.user, this.isUserAccount, this.updateAccountInfo);
 
   //URLS
   String reportBugUrl = Domain.getWeb() + "bugReport";
@@ -37,17 +42,20 @@ class _AccountPage extends State<AccountPage> {
 
   Future<User> getUserFromID() async {
     UserController userController = UserController();
-    isUserAccount = await getHostUserID();
-    return await userController.getUserByID(uid);
+    return await userController.getUserByID(user.userID);
   }
 
-  Future<bool> getHostUserID() async {
-    SharedPreferences preferences = await SharedPreferences.getInstance();
-    String tempUID = preferences.getString("UID");
-    if (tempUID == uid) {
-      return true;
-    }
-    return false;
+  Future updateUser(List<KeyValue> editValues) async {
+    User tmpUser = await updateAccountInfo();
+    setState(() {
+      user = tmpUser;
+      if (editValues[1].value != "") {
+        user.profilePicture = editValues[1].value;
+      }
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Information Updated")),
+    );
   }
 
   Widget settingsButton() {
@@ -56,18 +64,19 @@ class _AccountPage extends State<AccountPage> {
     }
     return Container(
       alignment: Alignment.center,
-      margin: EdgeInsets.only(right: size.width * .05),
+      //margin: EdgeInsets.only(right: size.width * .05),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          settingsDropdown(),
+          settingsDropdown(user),
         ],
       ),
     );
   }
 
-  Widget settingsDropdown() {
+  Widget settingsDropdown(User user) {
+    List<KeyValue> editValues = new List<KeyValue>.empty(growable: true);
     return PopupMenuButton(
       color: Theme.of(context).primaryColor,
       icon: Icon(Icons.settings, size: 30),
@@ -108,7 +117,18 @@ class _AccountPage extends State<AccountPage> {
       ],
       onSelected: (item) async => {
         if (item == 0)
-          {}
+          {
+            editValues = await Navigator.push(
+                context,
+                new MaterialPageRoute(
+                    builder: (context) => EditAccountPage(user))),
+            //Doesn't update right now
+            //TODO: Ensure that AccountHeader updates after editing values
+            if (editValues != null && editValues[0].value == true)
+              {
+                await updateUser(editValues),
+              }
+          }
         else if (item == 1)
           {
             await canLaunch(reportBugUrl)
@@ -129,60 +149,67 @@ class _AccountPage extends State<AccountPage> {
     );
   }
 
+  AppBar accountAppBar() {
+    Color backgroundColor = Theme.of(context).backgroundColor;
+    if (isUserAccount) {
+      return AppBar(
+        backgroundColor: backgroundColor,
+        elevation: 0,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: settingsButton(),
+          ),
+        ],
+      );
+    }
+    return AppBar(
+      automaticallyImplyLeading: true,
+      elevation: 0,
+      backgroundColor: backgroundColor,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     size = MediaQuery.of(context).size;
-    return FutureBuilder(
-        future: getUserFromID(),
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            User user = snapshot.data;
-            return DefaultTabController(
-              length: 3,
-              child: Scaffold(
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
+        appBar: accountAppBar(),
+        backgroundColor: Theme.of(context).backgroundColor,
+        body: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            AccountHeader(user),
+            SizedBox(
+              height: size.height * .125,
+              child: AppBar(
+                automaticallyImplyLeading: false,
                 backgroundColor: Theme.of(context).backgroundColor,
-                body: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: <Widget>[
-                    Padding(padding: EdgeInsets.only(top: size.height * .075)),
-                    settingsButton(),
-                    AccountHeader(user),
-                    SizedBox(
-                      height: size.height * .125,
-                      child: AppBar(
-                        backgroundColor: Theme.of(context).backgroundColor,
-                        bottom: TabBar(
-                          tabs: [
-                            Tab(icon: Icon(Icons.save_alt)),
-                            Tab(icon: Icon(Icons.remove_red_eye)),
-                            Tab(icon: Icon(Icons.create_outlined)),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: TabBarView(
-                        children: <Widget>[
-                          UserPollTab(user.savedPollsID, uid),
-                          UserPollTab(user.recentlyRespondedToPollsID, uid),
-                          UserPollTab(user.myPollsID, uid),
-                        ],
-                      ),
-                    ),
+                bottom: TabBar(
+                  tabs: [
+                    Tab(icon: Icon(Icons.save_alt)),
+                    Tab(icon: Icon(Icons.remove_red_eye)),
+                    Tab(icon: Icon(Icons.create_outlined)),
                   ],
                 ),
               ),
-            );
-          } else if (snapshot.hasError) {
-            print(snapshot.error);
-            return SafeArea(child: errorDisplay());
-          }
-          return SafeArea(
-            top: true,
-            child: circularProgress(),
-          );
-        });
+            ),
+            Expanded(
+              child: TabBarView(
+                children: <Widget>[
+                  UserPollTab(user.savedPollsID, user.userID),
+                  UserPollTab(user.recentlyRespondedToPollsID, user.userID),
+                  UserPollTab(user.myPollsID, user.userID),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future logout() async {

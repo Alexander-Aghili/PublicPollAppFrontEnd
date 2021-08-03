@@ -255,19 +255,19 @@ class _SignInPage extends State<SignInPage> {
   Future signIn() async {
     SignIn signIn = SignIn(
         username: usernameController.text, password: passwordController.text);
-    String UID = await signIn.sendSignInRequest();
+    String uid = await signIn.sendSignInRequest();
     //Error container says bad username or password
-    if (UID.isNotEmpty && UID.indexOf(" ") == -1) {
+    if (uid.isNotEmpty && uid.indexOf(" ") == -1) {
       //Saving logged
       SharedPreferences preferences = await SharedPreferences.getInstance();
-      preferences.setString("UID", UID);
+      preferences.setString("UID", uid);
 
       //Going to push with User information
       Navigator.pushReplacement(
-          context, new MaterialPageRoute(builder: (context) => HomePage(UID)));
+          context, new MaterialPageRoute(builder: (context) => HomePage(uid)));
     } else {
       setState(() {
-        errorDisplay = errorContainer(UID);
+        errorDisplay = errorContainer(uid);
       });
     }
   }

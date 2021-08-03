@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:public_poll/Authentication/SignUpEmailPage.dart';
-import 'package:public_poll/Mobile/Widgets/Essential/Header.dart';
 
 class SignUpPage extends StatefulWidget {
   @override
@@ -9,7 +8,6 @@ class SignUpPage extends StatefulWidget {
 }
 class _SignUpPage extends State<SignUpPage> {
   Size size;
-  GlobalKey<FormState> _registerFormKey = GlobalKey<FormState>();
 
   @override
   initState() {

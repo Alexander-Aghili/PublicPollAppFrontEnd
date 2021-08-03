@@ -17,6 +17,8 @@ class User {
   String gender;
   String password;
   String profilePictureLink;
+  Image profilePicture; // For CommentDisplay
+  int commentID; //For CommentPage
   List<String> savedPollsID;
   List<String> recentlyRespondedToPollsID;
   List<String> myPollsID;
@@ -82,7 +84,7 @@ class User {
         'gender': gender,
         'password': password,
         'profilePicture': profilePictureLink,
-        /*TODO implement
+        /*TODO implement maybe
         'savedPolls': getJSONListFromStringList(savedPollsID),
         'recentPolls': getJSONListFromStringList(recentlyRespondedToPollsID),
         'myPolls': getJSONListFromStringList(myPollsID),

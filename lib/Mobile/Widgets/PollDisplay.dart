@@ -221,13 +221,15 @@ class _PollDisplay extends State<PollDisplay> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         GestureDetector(
-          onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => CommentPage(
-                        comments: poll.comments,
-                        pollID: poll.pollID,
-                      ))),
+          onTap: () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => CommentPage(
+                          comments: poll.comments,
+                          pollID: poll.pollID,
+                        )));
+          },
           child: bottomRowIcon(Icon(Icons.comment), Alignment.centerLeft),
         ),
         Spacer(),

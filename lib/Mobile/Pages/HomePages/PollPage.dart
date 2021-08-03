@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:public_poll/Mobile/Widgets/Essential/Error.dart';
 import 'package:public_poll/Mobile/Widgets/Essential/LoadingAction.dart';
 import 'package:public_poll/Mobile/Widgets/PollListView.dart';
 import 'package:public_poll/Models/Poll.dart';
 import 'package:public_poll/Controller/PollRequests.dart';
+import 'package:public_poll/Models/User.dart';
 
 /*
  * Copyright © 2021 Alexander Aghili - All Rights Reserved
@@ -13,11 +13,14 @@ import 'package:public_poll/Controller/PollRequests.dart';
  */
 
 class PollPage extends StatefulWidget {
-  final String uid;
-  PollPage(this.uid);
+  final User user;
+  final List<Poll> polls;
+  final Function updatePollsFunction;
+  PollPage(this.user, this.polls, this.updatePollsFunction);
 
   @override
-  State<StatefulWidget> createState() => _PollPage(uid);
+  State<StatefulWidget> createState() =>
+      _PollPage(user, polls, updatePollsFunction);
 }
 
 /*
@@ -27,20 +30,23 @@ class _PollPage extends State<PollPage> {
   Size size;
   Widget listView;
 
-  String uid;
-  _PollPage(this.uid);
+  User user;
+  List<Poll> polls;
+  Function updatePollsFunction;
+  _PollPage(this.user, this.polls, this.updatePollsFunction);
 
   //Gets random polls using PollRequests class, gets a list of polls
   Future<List<Poll>> getPollsRandom() async {
     PollRequests request = PollRequests();
-    return await request.getPolls(uid);
+    return await request.getPolls(user.userID);
   }
 
   //When list is refreshed
   Future<void> _refreshList() async {
-    List<Poll> polls = await getPollsRandom();
+    List<Poll> tempPolls = await updatePollsFunction();
     setState(() {
-      listView = pollListView(polls, _refreshList, size, uid);
+      polls = tempPolls;
+      listView = pollListView(polls, _refreshList, size, user.userID);
     });
   }
 
@@ -50,25 +56,25 @@ class _PollPage extends State<PollPage> {
   @override
   Widget build(BuildContext context) {
     size = MediaQuery.of(context).size;
+    if (polls.isEmpty) {
+      listView = Center(
+        child: Container(
+          child: Text(
+            "No new polls.\nCheck back later!",
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 25),
+          ),
+        ),
+      );
+    } else {
+      listView = pollListView(polls, _refreshList, size, user.userID);
+    }
+
     return Scaffold(
       backgroundColor: Theme.of(context).backgroundColor,
       body: SafeArea(
         top: true,
-        child: FutureBuilder<List<Poll>>(
-            future: getPollsRandom(),
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                listView = pollListView(snapshot.data, _refreshList, size, uid);
-                return listView;
-              } else if (snapshot.hasError) {
-                return Center(
-                  child: Container(
-                    child: Text("No new polls.\nCheck back later!", textAlign: TextAlign.center, style: TextStyle(fontSize: 25),),
-                  ),
-                );
-              }
-              return circularProgress();
-            }),
+        child: listView,
       ),
     );
   }

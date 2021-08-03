@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:public_poll/Mobile/Widgets/Essential/Avatar.dart';
 import 'package:public_poll/Models/User.dart';
 import 'package:public_poll/Style.dart';
 
 class AccountHeader extends StatefulWidget {
-  User user;
+  final User user;
   AccountHeader(this.user);
 
   @override
@@ -13,34 +14,55 @@ class AccountHeader extends StatefulWidget {
 class _AccountHeader extends State<AccountHeader> {
   User user;
   Size size;
+  Image userImage;
   _AccountHeader(this.user);
+
+  @override
+  void initState() {
+    super.initState();
+    userImage = getAvatarForAccount();
+  }
 
   //Get images when you set up bucket storage
   Widget userAvatar() {
+    const double radius = 45;
     return Container(
         margin: EdgeInsets.symmetric(horizontal: size.width * .075),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
-            CircleAvatar(
-              radius: 45,
-              backgroundImage:
-                  Image.asset("assets/images/default_user_image.jpg").image,
-            ),
+            getAvatar(userImage, radius, false),
             Padding(padding: EdgeInsets.only(top: size.height * .005)),
             Text(user.firstname + " " + user.lastname),
           ],
         ));
   }
 
+  Image getAvatarForAccount() {
+    Image avatar;
+    if (user.profilePictureLink == null || user.profilePictureLink == "") {
+      avatar = Image.asset("assets/images/default_user_image.jpg");
+    } else {
+      if (user.profilePicture == null) {
+        print("Making Request");
+        avatar = Image.network(user.profilePictureLink);
+        user.profilePicture = avatar;
+      } else {
+        avatar = user.profilePicture;
+      }
+    }
+    return avatar;
+  }
 
   //Maybe look at this?
   //https://flutteragency.com/make-text-as-big-as-the-width-allows-in-flutter/
   Widget username() {
     return Expanded(
-       child: Text(user.username, style: Styles.baseTextStyle(context, 40),)
-    );
+        child: Text(
+      user.username,
+      style: Styles.baseTextStyle(context, 40),
+    ));
   }
 
   @override

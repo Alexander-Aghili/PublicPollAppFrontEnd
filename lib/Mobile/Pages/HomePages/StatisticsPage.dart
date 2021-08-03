@@ -16,7 +16,16 @@ class StatisticsPage extends StatelessWidget {
   StatisticsPage({@required this.poll});
 
   Size size;
+  int total;
   Color conColor;
+
+  int getTotal() {
+    int total = 0;
+    for (int i = 0; i < poll.answers.length; i++) {
+      total += poll.answers[i].userIDs.length;
+    }
+    return total;
+  }
 
   Column barGraph() {
     return Column(
@@ -28,10 +37,6 @@ class StatisticsPage extends StatelessWidget {
 
   List<Widget> getBarComponents() {
     List<Widget> components = new List<Widget>.empty(growable: true);
-    int total = 0;
-    for (int i = 0; i < poll.answers.length; i++) {
-      total += poll.answers[i].userIDs.length;
-    }
     for (int i = 0; i < poll.answers.length; i++) {
       PollAnswer pollAnswer = poll.answers[i];
       double percentage = (poll.answers[i].userIDs.length) / total;
@@ -72,10 +77,18 @@ class StatisticsPage extends StatelessWidget {
     );
   }
 
+  Widget totalVotes() {
+    return Container(
+      child: Center(
+        child: Text("Total Votes: " + total.toString(), style: TextStyle(fontSize: 20))),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     size = MediaQuery.of(context).size;
     conColor = Theme.of(context).cupertinoOverrideTheme.primaryContrastingColor;
+    total = getTotal();
 
     return Scaffold(
       appBar: header(
@@ -85,7 +98,14 @@ class StatisticsPage extends StatelessWidget {
           eliminateBackButton: false),
       backgroundColor: Theme.of(context).primaryColor,
       body: Center(
-        child: barGraph(),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            totalVotes(),
+            barGraph(),
+          ],
+        ),
       ),
     );
   }

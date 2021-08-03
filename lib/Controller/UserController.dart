@@ -1,8 +1,10 @@
 import 'dart:convert';
-
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:http/http.dart';
 import 'package:public_poll/Controller/Domain.dart';
+import 'package:public_poll/Models/KeyValue.dart';
 import 'package:public_poll/Models/User.dart';
 
 class UserController {
@@ -55,6 +57,7 @@ class UserController {
   }
 
   Future<String> verifyCreateUserInfo(String email, String username) async {
+    // ignore: non_constant_identifier_names
     String JSONFormat =
         jsonFormatWithTwoComponents("email", email, "username", username);
 
@@ -68,6 +71,7 @@ class UserController {
 
   Future<String> signInWithUsernameAndPassword(
       String username, String password) async {
+    // ignore: non_constant_identifier_names
     String JSONFormat =
         jsonFormatWithTwoComponents("username", username, "password", password);
     Response response = await http.post(Uri.parse(url + "signInUsername"),
@@ -108,6 +112,51 @@ class UserController {
         },
         body: jsonEncode(json));
     if (response.statusCode != 201 || response.body != "ok") {
+      return "error";
+    } else {
+      return response.body;
+    }
+  }
+
+  Future<void> uploadProfileImage(
+      File file, String userID, bool needReplace) async {
+    var stream = http.ByteStream(file.openRead());
+    stream.cast();
+    Uint8List bytes = await stream.toBytes();
+
+    Response response = await http.post(
+      Uri.parse(url +
+          "uploadProfilePicture/" +
+          userID +
+          "/" +
+          needReplace.toString()),
+      headers: <String, String>{
+        'Content-Type': 'application/octet-stream; charset=UTF-8'
+      },
+      body: bytes,
+    );
+
+    if (response.statusCode != 201) {
+      throw Exception("Couldn't Upload Image");
+    }
+  }
+
+  Future<String> editUserInformation(
+      String userID, List<KeyValue> keyValuePairs) async {
+    String json = '{"userID": "' + userID + '",';
+    for (int i = 0; i < keyValuePairs.length; i++) {
+      json += keyValuePairs[i].toJson() + ",";
+    }
+    json = json.substring(0, json.length - 1) + "}";
+
+    Response response = await http.post(
+      Uri.parse(url + "editUser"),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: json
+    );
+    if (response.statusCode != 201) {
       return "error";
     } else {
       return response.body;
