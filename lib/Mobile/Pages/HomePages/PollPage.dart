@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:public_poll/Mobile/Widgets/Essential/LoadingAction.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:public_poll/Mobile/Widgets/PollListView.dart';
 import 'package:public_poll/Models/Poll.dart';
-import 'package:public_poll/Controller/PollRequests.dart';
 import 'package:public_poll/Models/User.dart';
 
 /*
@@ -35,10 +34,10 @@ class _PollPage extends State<PollPage> {
   Function updatePollsFunction;
   _PollPage(this.user, this.polls, this.updatePollsFunction);
 
-  //Gets random polls using PollRequests class, gets a list of polls
-  Future<List<Poll>> getPollsRandom() async {
-    PollRequests request = PollRequests();
-    return await request.getPolls(user.userID);
+  @override
+  void initState() {
+    super.initState();
+    if (EasyLoading.isShow) EasyLoading.dismiss();
   }
 
   //When list is refreshed
@@ -60,7 +59,7 @@ class _PollPage extends State<PollPage> {
       listView = Center(
         child: Container(
           child: Text(
-            "No new polls.\nCheck back later!",
+            "No new polls.\nRefresh or Check back later!",
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 25),
           ),
@@ -76,6 +75,14 @@ class _PollPage extends State<PollPage> {
         top: true,
         child: listView,
       ),
+      floatingActionButton: FloatingActionButton(
+          backgroundColor: Colors.blue,
+          child: Icon(Icons.refresh),
+          onPressed: () {
+            EasyLoading.show();
+            _refreshList();
+            EasyLoading.dismiss();
+          }),
     );
   }
 }

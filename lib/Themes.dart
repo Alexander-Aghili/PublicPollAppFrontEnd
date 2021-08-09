@@ -50,8 +50,13 @@ ThemeData lightMode() {
     backgroundColor: Colors.white,
     primaryColor: Colors.white,
     hintColor: Colors.black,
-    dialogTheme: DialogTheme(
-      backgroundColor: Colors.blue,
+    inputDecorationTheme: const InputDecorationTheme(
+      hintStyle: TextStyle(color: Colors.black),
+      labelStyle: TextStyle(color: Colors.black),
+      focusColor: Colors.black,
+      focusedBorder: OutlineInputBorder(
+        borderSide:  BorderSide(width: 1, color: Colors.black),
+      )
     ),
     focusColor: Colors.grey.shade300,
     accentColor: Colors.grey.shade800,

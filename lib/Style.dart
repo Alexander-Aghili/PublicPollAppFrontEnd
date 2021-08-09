@@ -15,11 +15,51 @@ class Styles {
       fontSize: fontSize * MediaQuery.of(context).textScaleFactor,
     );
   }
-  static baseTextStyleWithColor(BuildContext context, double fontSize, Color color) {
+
+  static baseTextStyleWithColor(
+      BuildContext context, double fontSize, Color color) {
     return TextStyle(
       color: color,
       /*fontFamily:*/
       fontSize: fontSize * MediaQuery.of(context).textScaleFactor,
     );
+  }
+}
+
+double getFontSizeHorziontal(BuildContext context, double initSize) {
+  Size size = MediaQuery.of(context).size;
+  if (size.width < 350) {
+    return initSize - 10;
+  } else {
+    return initSize;
+  }
+}
+
+double getFontSizeVertical(BuildContext context, double initSize) {
+  Size size = MediaQuery.of(context).size;
+  if (size.height < 700) {
+    return initSize - 10;
+  } else {
+    return initSize;
+  }
+}
+
+double getAvatarSize(BuildContext context) {
+  Size size = MediaQuery.of(context).size;
+  if (size.width < 350) {
+    return 32;
+  } else if (size.width < 400) {
+    return 37;
+  } else {
+    return 45;
+  }
+}
+
+double titleSize(BuildContext context) {
+  Size size = MediaQuery.of(context).size;
+  if (size.width < 300) {
+    return 20;
+  } else {
+    return 35;
   }
 }

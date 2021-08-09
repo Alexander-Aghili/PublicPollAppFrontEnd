@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:public_poll/Models/Poll.dart';
 
 /*
  * Copyright © 2021 Alexander Aghili - All Rights Reserved

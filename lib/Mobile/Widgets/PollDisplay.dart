@@ -23,8 +23,10 @@ import 'Essential/MenuItem.dart';
 
 class PollDisplay extends StatefulWidget {
   final Poll poll;
-  final String userID;
-  PollDisplay(this.poll, this.userID, {@required Key key}) : super(key: key);
+  final String userID; // You always want this person to be the person who is logged in, 
+  //ei. localstorage "UID" would return this
+  PollDisplay(this.poll, this.userID, {@required Key key})
+      : super(key: key);
 
   @override
   State<StatefulWidget> createState() => _PollDisplay(poll, userID);
@@ -52,6 +54,13 @@ class _PollDisplay extends State<PollDisplay> {
   String selectedAnswer;
   int totalVotes;
   String userID;
+  Future isSavedFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    isSavedFuture = getSavedState();
+  }
 
   Color contrastColor;
   /*
@@ -121,7 +130,7 @@ class _PollDisplay extends State<PollDisplay> {
           ),
         ),
         FutureBuilder(
-            future: getSavedState(),
+            future: isSavedFuture,
             builder: (context, snapshot) {
               if (snapshot.hasData) {
                 isSaved = snapshot.data;
@@ -135,6 +144,7 @@ class _PollDisplay extends State<PollDisplay> {
                         Icon(Icons.archive),
                         size: size,
                         context: context,
+                        extraPadding: true
                       ),
                     if (isSaved)
                       menuItem(
@@ -143,6 +153,7 @@ class _PollDisplay extends State<PollDisplay> {
                         Icon(Icons.crop),
                         size: size,
                         context: context,
+                        extraPadding: true
                       ),
                     PopupMenuDivider(),
                     if (userID != poll.creatorID)
@@ -155,7 +166,9 @@ class _PollDisplay extends State<PollDisplay> {
                           ),
                           color: Colors.red,
                           size: size,
-                          context: context),
+                          context: context,
+                          extraPadding: true
+                        ),
                     if (userID == poll.creatorID)
                       menuItem(
                           2,
@@ -166,7 +179,9 @@ class _PollDisplay extends State<PollDisplay> {
                           ),
                           color: Colors.red,
                           size: size,
-                          context: context),
+                          context: context,
+                          extraPadding: true
+                        ),
                   ],
                   onSelected: (item) async {
                     if (item == 0 && !isSaved) {
@@ -213,10 +228,11 @@ class _PollDisplay extends State<PollDisplay> {
 
   Row bottomDataRow() {
     Icon shareIcon;
-    if (Platform.isAndroid)
+    if (kIsWeb || Platform.isAndroid)
       shareIcon = Icon(Icons.share);
     else
       shareIcon = Icon(Icons.ios_share);
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -228,6 +244,7 @@ class _PollDisplay extends State<PollDisplay> {
                     builder: (context) => CommentPage(
                           comments: poll.comments,
                           pollID: poll.pollID,
+                          hostuid: userID,
                         )));
           },
           child: bottomRowIcon(Icon(Icons.comment), Alignment.centerLeft),
@@ -484,24 +501,24 @@ class _AnswerBox extends State<AnswerBox> {
                       ),
                     ),
                   ),
-                  Container(
-                    width: 35,
-                    child: Text(""),
-                  ), //Empty container to not press the text up again the corner of the box
+                  if (selectedAnswer != null)
+                    Container(
+                      alignment: Alignment.center,
+                      padding: EdgeInsets.only(left: 10, right: 10),
+                      child: Text(
+                        getVotePercentage(answer.userIDs.length),
+                        style: Styles.baseTextStyle(context, 14),
+                      ),
+                    ),
+                  if (selectedAnswer == null)
+                    Container(
+                      width: 35,
+                      child: Text(""),
+                    ), //Empty container to not press the text up again the corner of the box
                 ],
               ),
             ),
           ),
-          if (selectedAnswer != null)
-            Container(
-              alignment: Alignment.center,
-              padding: EdgeInsets.only(left: 10),
-              width: size.width * .125,
-              child: Text(
-                getVotePercentage(answer.userIDs.length),
-                style: Styles.baseTextStyle(context, 14),
-              ),
-            ),
         ],
       ),
     );

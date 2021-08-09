@@ -3,13 +3,16 @@ import 'package:flutter/material.dart';
 import '../../../Style.dart';
 
 PopupMenuItem<int> menuItem(int value, String text, Icon icon,
-      {Color color, @required Size size, @required BuildContext context}) {
+      {Color color, @required Size size, @required BuildContext context, bool extraPadding}) {
+    
     return PopupMenuItem<int>(
       value: value,
       child: Row(
         children: <Widget>[
+          if (extraPadding != null && extraPadding != false)
+            Padding(padding: EdgeInsets.only(right: 5)),
+
           Container(
-            width: size.width * .25,
             child: Text(
               text,
               style: (color == null

@@ -1,9 +1,9 @@
 class Domain {
   static getAPI() {
-    return 'http://192.168.87.125:8081/PublicPollBackEnd/publicpoll/';
+    return 'http://147.182.237.29:8080/PublicPollBackEnd/publicpoll/';
   }
 
   static getWeb() {
-    return 'http://192.168.87.125:8082/';
+    return 'https://147.182.237.29/';
   }
 }

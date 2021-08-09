@@ -1,10 +1,12 @@
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 circularProgress() {
-  if (Platform.isIOS) {
+
+  if (!kIsWeb && Platform.isIOS) {
     return Container(
       alignment: Alignment.center,
       padding: EdgeInsets.only(top: 12.0),

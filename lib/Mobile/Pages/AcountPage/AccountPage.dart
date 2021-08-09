@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:public_poll/Authentication/SignInPage.dart';
 import 'package:public_poll/Controller/Domain.dart';
+import 'package:public_poll/Controller/PollRequests.dart';
 import 'package:public_poll/Controller/UserController.dart';
 import 'package:public_poll/Mobile/Pages/AcountPage/AccountHeader.dart';
 import 'package:public_poll/Mobile/Pages/AcountPage/EditAccountPage.dart';
 import 'package:public_poll/Mobile/Pages/AcountPage/UserPollTab.dart';
+import 'package:public_poll/Mobile/Widgets/Essential/LoadingAction.dart';
 import 'package:public_poll/Mobile/Widgets/Essential/MenuItem.dart';
 import 'package:public_poll/Models/KeyValue.dart';
+import 'package:public_poll/Models/Poll.dart';
 import 'package:public_poll/Models/User.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -20,29 +24,41 @@ import 'package:url_launcher/url_launcher.dart';
 
 class AccountPage extends StatefulWidget {
   final User user;
-  final bool isUserAccount;
+  final String hostuid;
   final Function updateAccountInfo;
-  AccountPage(this.user, this.isUserAccount, this.updateAccountInfo);
+  AccountPage(this.user, this.hostuid, this.updateAccountInfo);
   @override
   State<StatefulWidget> createState() =>
-      _AccountPage(user, isUserAccount, updateAccountInfo);
+      _AccountPage(user, hostuid, updateAccountInfo);
 }
 
 class _AccountPage extends State<AccountPage> {
-  bool isUserAccount;
+  String hostuid;
   Size size;
   Image profileImage;
   User user;
   Function updateAccountInfo;
-  _AccountPage(this.user, this.isUserAccount, this.updateAccountInfo);
+  bool isUserAccount;
+  _AccountPage(this.user, this.hostuid, this.updateAccountInfo) {
+    isUserAccount = (hostuid == user.userID);
+  }
+
+  List<KeyValue> userPollInfo = new List<KeyValue>.empty(growable: true);
+  Future userPollData;
+
+  List<Poll> savedPolls;
+  List<Poll> recentlyRespondedToPolls;
+  List<Poll> myPolls;
 
   //URLS
   String reportBugUrl = Domain.getWeb() + "bugReport";
   String contactUsUrl = Domain.getWeb() + "contactUs";
 
-  Future<User> getUserFromID() async {
-    UserController userController = UserController();
-    return await userController.getUserByID(user.userID);
+  @override
+  void initState() {
+    super.initState();
+    userPollData = userPollFuture(user.userID);
+    if (EasyLoading.isShow) EasyLoading.dismiss();
   }
 
   Future updateUser(List<KeyValue> editValues) async {
@@ -170,6 +186,38 @@ class _AccountPage extends State<AccountPage> {
     );
   }
 
+  Future<List<Poll>> getPollsFromPollIDs(List<String> pollIDs) async {
+    PollRequests requests = PollRequests();
+    return await requests.getPollsFromPollIDs(pollIDs, true);
+  }
+
+  Future<List<Poll>> getUserPollsByID(String uid, int type) async {
+    UserController controller = UserController();
+    return await controller.getUserPoll(uid, type);
+  }
+
+  Future<List<Poll>> updatePolls(String userID, int type) async {
+    setState(() {
+      userPollData = userPollFuture(userID);
+    });
+    List<KeyValue> userPollInformationTemp = await userPollData;
+    setState(() {
+      userPollInfo = userPollInformationTemp;
+    });
+
+    return savedPolls = userPollInformationTemp[userPollInfo
+            .indexWhere((element) => element.key == type.toString())]
+        .value;
+  }
+
+  Future userPollFuture(String userID) async {
+    List<KeyValue> userPollTemp = new List<KeyValue>.empty(growable: true);
+    userPollTemp.add(new KeyValue("1", await getUserPollsByID(userID, 1)));
+    userPollTemp.add(new KeyValue("2", await getUserPollsByID(userID, 2)));
+    userPollTemp.add(new KeyValue("3", await getUserPollsByID(userID, 3)));
+    return userPollTemp;
+  }
+
   @override
   Widget build(BuildContext context) {
     size = MediaQuery.of(context).size;
@@ -183,10 +231,11 @@ class _AccountPage extends State<AccountPage> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             AccountHeader(user),
-            SizedBox(
-              height: size.height * .125,
+            Container(
+              height: 50,
               child: AppBar(
                 automaticallyImplyLeading: false,
+                elevation: 0,
                 backgroundColor: Theme.of(context).backgroundColor,
                 bottom: TabBar(
                   tabs: [
@@ -198,13 +247,31 @@ class _AccountPage extends State<AccountPage> {
               ),
             ),
             Expanded(
-              child: TabBarView(
-                children: <Widget>[
-                  UserPollTab(user.savedPollsID, user.userID),
-                  UserPollTab(user.recentlyRespondedToPollsID, user.userID),
-                  UserPollTab(user.myPollsID, user.userID),
-                ],
-              ),
+              child: FutureBuilder(
+                  future: userPollData,
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) {
+                      userPollInfo = snapshot.data;
+                      savedPolls = userPollInfo[userPollInfo
+                              .indexWhere((element) => element.key == "1")]
+                          .value;
+                      recentlyRespondedToPolls = userPollInfo[userPollInfo
+                              .indexWhere((element) => element.key == "2")]
+                          .value;
+                      myPolls = userPollInfo[userPollInfo
+                              .indexWhere((element) => element.key == "3")]
+                          .value;
+                      return TabBarView(
+                        children: <Widget>[
+                          UserPollTab(savedPolls, user.userID, hostuid, 1, updatePolls),
+                          UserPollTab(recentlyRespondedToPolls, user.userID, hostuid, 2,
+                              updatePolls),
+                          UserPollTab(myPolls, user.userID, hostuid, 3, updatePolls),
+                        ],
+                      );
+                    }
+                    return circularProgress();
+                  }),
             ),
           ],
         ),

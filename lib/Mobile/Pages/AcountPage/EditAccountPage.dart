@@ -1,7 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import 'package:public_poll/Authentication/Validator.dart';
 import 'package:public_poll/Controller/UserController.dart';
 import 'package:public_poll/Mobile/Widgets/Essential/Avatar.dart';
@@ -9,6 +11,10 @@ import 'package:public_poll/Mobile/Widgets/Essential/Header.dart';
 import 'package:public_poll/Mobile/Widgets/FormFields.dart';
 import 'package:public_poll/Models/KeyValue.dart';
 import 'package:public_poll/Models/User.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../Themes.dart';
+import '../../../main.dart';
 
 //TODO: Do
 class EditAccountPage extends StatefulWidget {
@@ -27,6 +33,7 @@ class _EditAccountPage extends State<EditAccountPage> {
   Image profileImage;
   Image originalImage;
   bool savePressed = false;
+  bool absorb;
   List<FieldArea> formFields = List<FieldArea>.empty(growable: true);
 
   _EditAccountPage(this.user);
@@ -34,6 +41,7 @@ class _EditAccountPage extends State<EditAccountPage> {
   @override
   void initState() {
     super.initState();
+    absorb = false;
     originalImage = getAvatarForAccount();
     profileImage = originalImage;
   }
@@ -92,6 +100,36 @@ class _EditAccountPage extends State<EditAccountPage> {
     );
   }
 
+  Widget changeThemeButton() {
+    final notifier = Provider.of<ThemeNotifier>(context);
+    return Container(
+      width: size.width * .75,
+      child: ElevatedButton(
+        onPressed: () async {
+          onThemeChanged(notifier);
+        },
+        child: Text(
+          "Change Theme",
+          style: TextStyle(fontSize: 18),
+        ),
+      ),
+    );
+  }
+
+  void onThemeChanged(ThemeNotifier themeNotifier) async {
+    bool isDark;
+    if (themeNotifier.getTheme().brightness == darkMode().brightness) {
+      themeNotifier.setTheme(lightMode());
+      isDark = false;
+    } else {
+      themeNotifier.setTheme(darkMode());
+      isDark = true;
+    }
+
+    var prefs = await SharedPreferences.getInstance();
+    prefs.setBool('darkMode', isDark);
+  }
+
   Widget deleteAccount() {
     return Container(
       width: size.width * .75,
@@ -148,23 +186,28 @@ class _EditAccountPage extends State<EditAccountPage> {
           isAppTitle: false,
           title: "Edit Account",
           eliminateBackButton: false),
-      body: ListView(
-        physics: const ScrollPhysics(),
-        children: [
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              changeDetails(),
-              defaultPadding(),
-              profilePicture(context),
-              defaultPadding(),
-              saveDetails(),
-              for (int i = 0; i < 3; i++) defaultPadding(),
-              deleteAccount(),
-            ],
-          ),
-        ],
+      body: AbsorbPointer(
+        absorbing: absorb,
+        child: ListView(
+          physics: const ScrollPhysics(),
+          children: [
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                changeDetails(),
+                defaultPadding(),
+                profilePicture(context),
+                defaultPadding(),
+                saveDetails(),
+                defaultPadding(),
+                changeThemeButton(),
+                for (int i = 0; i < 3; i++) defaultPadding(),
+                deleteAccount(),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -175,8 +218,10 @@ class _EditAccountPage extends State<EditAccountPage> {
     } else {
       setState(() {
         savePressed = true;
+        absorb = true;
       });
     }
+    EasyLoading.show();
 
     List<KeyValue> keyValuePairs = new List<KeyValue>.empty(growable: true);
     List<KeyValue> editValues = new List<KeyValue>.empty(growable: true);
@@ -219,9 +264,11 @@ class _EditAccountPage extends State<EditAccountPage> {
       editValues.add(new KeyValue("image", profileImage));
       bool needReplaceUrl;
 
-      if (user.profilePictureLink
-              .substring(user.profilePictureLink.lastIndexOf("/") + 1) ==
-          (user.userID.toString() + '-profileImage.jpg')) {
+      if (user.profilePictureLink != null &&
+          user.profilePictureLink != "" &&
+          user.profilePictureLink
+                  .substring(user.profilePictureLink.lastIndexOf("/") + 1) ==
+              (user.userID.toString() + '-profileImage.jpg')) {
         needReplaceUrl = false;
       } else {
         needReplaceUrl = true;
@@ -231,6 +278,10 @@ class _EditAccountPage extends State<EditAccountPage> {
     } else {
       editValues.add(new KeyValue("image", ""));
     }
+    EasyLoading.dismiss();
+    setState(() {
+      absorb = false;
+    });
     Navigator.pop(context, editValues);
   }
 }

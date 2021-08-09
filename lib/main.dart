@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:public_poll/Authentication/AuthDetection.dart';
 import 'package:public_poll/Themes.dart';
-import 'Authentication/AuthDetection.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /*
  * Copyright © 2021 Alexander Aghili - All Rights Reserved
@@ -13,23 +16,41 @@ import 'Authentication/AuthDetection.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-  runApp(MyApp());
+  SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.top]);
+  SharedPreferences.getInstance().then((prefs) {
+    var darkModeOn = prefs.getBool('darkMode') ?? true;
+    runApp(
+      ChangeNotifierProvider<ThemeNotifier>(
+        create: (_) => ThemeNotifier(darkModeOn ? darkMode() : lightMode()),
+        child: MyApp(),
+      ),
+    );
+  });
 }
 
-
-//useful
-//https://dev.to/carminezacc/advanced-flutter-networking-part-1-uploading-a-file-to-a-rest-api-from-flutter-using-a-multi-part-form-data-post-request-2ekm
 class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    final themeNotifier = Provider.of<ThemeNotifier>(context);
     return MaterialApp(
       title: 'Public Polling',
-      theme: lightMode(),
-      darkTheme: darkMode(),
-      themeMode: ThemeMode.system,
+      theme: themeNotifier.getTheme(),
       home: AuthDetection(),
       debugShowCheckedModeBanner: false,
+      builder: EasyLoading.init(),
     );
+  }
+}
+
+class ThemeNotifier with ChangeNotifier {
+  ThemeData _themeData;
+
+  ThemeNotifier(this._themeData);
+
+  getTheme() => _themeData;
+
+  setTheme(ThemeData themeData) async {
+    _themeData = themeData;
+    notifyListeners();
   }
 }

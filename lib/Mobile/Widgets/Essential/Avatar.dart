@@ -28,7 +28,7 @@ CircleAvatar getAvatar(Image image, double radius, bool camera) {
     return CircleAvatar(
       radius: radius,
       backgroundImage: image.image,
-      child: Icon(Icons.camera_alt),
+      child: Icon(Icons.camera_alt, color: Colors.white,),
     );
   }
   return CircleAvatar(

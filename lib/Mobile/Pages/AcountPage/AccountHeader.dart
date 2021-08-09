@@ -25,7 +25,7 @@ class _AccountHeader extends State<AccountHeader> {
 
   //Get images when you set up bucket storage
   Widget userAvatar() {
-    const double radius = 45;
+    double radius = getAvatarSize(context);
     return Container(
         margin: EdgeInsets.symmetric(horizontal: size.width * .075),
         child: Column(
@@ -61,7 +61,7 @@ class _AccountHeader extends State<AccountHeader> {
     return Expanded(
         child: Text(
       user.username,
-      style: Styles.baseTextStyle(context, 40),
+      style: Styles.baseTextStyle(context, getFontSizeHorziontal(context, 35)),
     ));
   }
 
@@ -73,7 +73,7 @@ class _AccountHeader extends State<AccountHeader> {
       margin: EdgeInsets.symmetric(
         horizontal: size.width * .05,
       ),
-      height: size.height * .15,
+      height: size.height * .175,
       width: size.width,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,

@@ -4,7 +4,9 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:http/http.dart';
 import 'package:public_poll/Controller/Domain.dart';
+import 'package:public_poll/Controller/PollRequests.dart';
 import 'package:public_poll/Models/KeyValue.dart';
+import 'package:public_poll/Models/Poll.dart';
 import 'package:public_poll/Models/User.dart';
 
 class UserController {
@@ -40,6 +42,21 @@ class UserController {
       }
     } else {
       throw Exception("Couldn't load if user poll exists");
+    }
+  }
+
+  Future<List<Poll>> getUserPoll(String userID, int type) async {
+    Response response = await http
+        .get(Uri.parse(url + "getUserPoll/" + userID + "/" + type.toString()));
+    if (response.statusCode == 200) {
+      PollRequests pollRequests = PollRequests();
+      try {
+        return pollRequests.listOfPolls(jsonDecode(response.body));
+      } catch (e) {
+        return new List<Poll>.empty(growable: true);
+      }
+    } else {
+      throw Exception("User Poll Error");
     }
   }
 
@@ -149,13 +166,11 @@ class UserController {
     }
     json = json.substring(0, json.length - 1) + "}";
 
-    Response response = await http.post(
-      Uri.parse(url + "editUser"),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: json
-    );
+    Response response = await http.post(Uri.parse(url + "editUser"),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: json);
     if (response.statusCode != 201) {
       return "error";
     } else {

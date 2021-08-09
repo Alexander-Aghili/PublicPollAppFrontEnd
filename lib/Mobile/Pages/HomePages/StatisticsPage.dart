@@ -11,7 +11,7 @@ import 'package:public_poll/Models/PollAnswer.dart';
  */
 
 class StatisticsPage extends StatelessWidget {
-  Poll poll;
+  final Poll poll;
 
   StatisticsPage({@required this.poll});
 

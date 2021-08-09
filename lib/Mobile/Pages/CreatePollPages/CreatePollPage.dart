@@ -1,6 +1,8 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:public_poll/Controller/Domain.dart';
 import 'package:public_poll/Controller/PollRequests.dart';
 import 'package:public_poll/Controller/UserController.dart';
@@ -28,11 +30,14 @@ List<Widget> answersComponents = List<Widget>();
 
 class CreatePollPage extends StatefulWidget {
   final String userID;
+  final Function freeze;
+  final Function unFreeze;
 
-  CreatePollPage(this.userID);
+  CreatePollPage(this.userID, this.freeze, this.unFreeze);
 
   @override
-  State<StatefulWidget> createState() => _CreatePollPage(userID);
+  State<StatefulWidget> createState() =>
+      _CreatePollPage(userID, freeze, unFreeze);
 }
 
 class _CreatePollPage extends State<CreatePollPage> {
@@ -40,12 +45,16 @@ class _CreatePollPage extends State<CreatePollPage> {
   bool isPriv;
   TextEditingController questionController = TextEditingController();
 
-  _CreatePollPage(this.userID);
+  Function freeze;
+  Function unFreeze;
+
+  _CreatePollPage(this.userID, this.freeze, this.unFreeze);
 
   @override
   void initState() {
     super.initState();
     isPriv = false;
+    if (EasyLoading.isShow) EasyLoading.dismiss();
   }
 
   @override
@@ -132,7 +141,8 @@ class _CreatePollPage extends State<CreatePollPage> {
             },
             child: Text(
               "Private Poll",
-              style: Styles.baseTextStyle(context, 35),
+              style: Styles.baseTextStyle(
+                  context, getFontSizeHorziontal(context, 35)),
             ),
           ),
         ],
@@ -153,7 +163,7 @@ class _CreatePollPage extends State<CreatePollPage> {
         child: Text(
           "Create Poll",
           style: Styles.baseTextStyleWithColor(
-              context, 30, Colors.white),
+              context, getFontSizeVertical(context, 30), Colors.white),
         ),
       ),
     );
@@ -166,6 +176,9 @@ class _CreatePollPage extends State<CreatePollPage> {
   users own polls.
   */
   void createNewPoll() async {
+    if (EasyLoading.isShow) return;
+    freeze();
+    EasyLoading.show();
     //If fails, doesn't cause issues with answer adding and deleting
     // ignore: deprecated_member_use
     List<Widget> answerBoxes = List<Widget>();
@@ -183,14 +196,19 @@ class _CreatePollPage extends State<CreatePollPage> {
     PollRequests requests = new PollRequests();
     String code = await requests.createPoll(poll);
     if (code.indexOf(" ") != -1) {
+      EasyLoading.dismiss();
+      unFreeze();
       errorMessage(code);
     } else {
       poll.pollID = code;
-      successMessage(poll);
 
       //Dumb and remove later
       UserController userController = UserController();
       await userController.addUserPolls(userID, code, 3);
+      EasyLoading.dismiss();
+      unFreeze();
+
+      successMessage(poll);
     }
   }
 
@@ -261,7 +279,7 @@ class _CreatePollPage extends State<CreatePollPage> {
   Widget shareButton(Poll poll) {
     Icon shareIcon;
     double iconSize = 30;
-    if (Platform.isAndroid) {
+    if (kIsWeb || Platform.isAndroid) {
       shareIcon = Icon(Icons.share, size: iconSize);
     } else if (Platform.isIOS) {
       shareIcon = Icon(Icons.ios_share, size: iconSize);

@@ -19,21 +19,24 @@ import 'package:shared_preferences/shared_preferences.dart';
 class CommentPage extends StatefulWidget {
   final List<PollComment> comments;
   final String pollID;
+  final String hostuid;
   CommentPage({
     @required this.comments,
     @required this.pollID,
+    @required this.hostuid,
   });
 
   @override
   State<StatefulWidget> createState() =>
-      _CommentPage(comments: comments, pollID: pollID);
+      _CommentPage(comments: comments, pollID: pollID, hostuid: hostuid);
 }
 
 class _CommentPage extends State<CommentPage> {
   List<PollComment> comments;
   String pollID;
+  String hostuid;
 
-  _CommentPage({@required this.comments, @required this.pollID});
+  _CommentPage({@required this.comments, @required this.pollID, @required this.hostuid});
 
   Color constrastColor;
   TextEditingController commentController = TextEditingController();
@@ -158,6 +161,7 @@ class _CommentPage extends State<CommentPage> {
           comments[i],
           isPostingUser,
           deleteComment,
+          hostuid,
           key: UniqueKey(),
         ));
       } catch (e) {
@@ -215,7 +219,6 @@ class _CommentPage extends State<CommentPage> {
             );
           });
     } else {
-
       comment.commentID = int.parse(id);
       setState(() {
         comments.add(comment);
@@ -223,7 +226,7 @@ class _CommentPage extends State<CommentPage> {
 
       futureData = getUsers();
       users = await futureData;
-      
+
       setState(() {
         commentDisplays = getCommentDisplays(users);
         commentController.clear();

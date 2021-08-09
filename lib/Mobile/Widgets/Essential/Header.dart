@@ -18,7 +18,7 @@ AppBar header({@required context, @required bool isAppTitle, @required String ti
     automaticallyImplyLeading: eliminateBackButton ? false : true,
     title: Text(
       (isAppTitle ? "Public Poll" : title),
-      style: Styles.baseTextStyle(context, 35),
+      style: Styles.baseTextStyle(context, titleSize(context)),
       overflow: TextOverflow.ellipsis,
     ),
     centerTitle: true,

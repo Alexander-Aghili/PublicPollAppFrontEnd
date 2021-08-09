@@ -13,19 +13,20 @@ import 'Essential/MenuItem.dart';
 //Removing a comment doesn't change its state and it remains
 class CommentDisplay extends StatefulWidget {
   final User user;
+  final String hostuid;
   final PollComment comment;
   final bool isPostingUser;
   final Function deleteComment;
   final Key key;
 
-  CommentDisplay(
-      this.user, this.comment, this.isPostingUser, this.deleteComment,
+  CommentDisplay(this.user, this.comment, this.isPostingUser,
+      this.deleteComment, this.hostuid,
       {this.key})
       : super(key: key);
 
   @override
   State<StatefulWidget> createState() =>
-      _CommentDisplay(user, comment, isPostingUser, deleteComment);
+      _CommentDisplay(user, comment, isPostingUser, deleteComment, hostuid);
 }
 
 class _CommentDisplay extends State<CommentDisplay> {
@@ -33,9 +34,9 @@ class _CommentDisplay extends State<CommentDisplay> {
   PollComment comment;
   bool isPostingUser;
   Function deleteComment;
-
+  String hostuid; 
   _CommentDisplay(
-      this.user, this.comment, this.isPostingUser, this.deleteComment);
+      this.user, this.comment, this.isPostingUser, this.deleteComment, this.hostuid);
 
   Size size;
 
@@ -81,7 +82,6 @@ class _CommentDisplay extends State<CommentDisplay> {
       avatar = Image.asset("assets/images/default_user_image.jpg");
     } else {
       if (user.profilePicture == null) {
-        print("Making Request");
         avatar = Image.network(user.profilePictureLink);
         setState(() {
           user.profilePicture = avatar;
@@ -97,8 +97,10 @@ class _CommentDisplay extends State<CommentDisplay> {
     Image avatar = getAvatarForComment();
     return GestureDetector(
       onTap: () {
-        Navigator.push(context,
-            MaterialPageRoute(builder: (context) => AccountPage(user, false, null)));
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => AccountPage(user, hostuid, null)));
       },
       child: Padding(
         padding: EdgeInsets.only(
@@ -143,7 +145,8 @@ class _CommentDisplay extends State<CommentDisplay> {
             ),
             color: Colors.red,
             size: size,
-            context: context),
+            context: context,
+            extraPadding: true),
         if (isPostingUser) PopupMenuDivider(),
         if (isPostingUser)
           menuItem(
@@ -155,7 +158,8 @@ class _CommentDisplay extends State<CommentDisplay> {
               ),
               color: Colors.red,
               size: size,
-              context: context),
+              context: context,
+              extraPadding: true),
       ],
       onSelected: (item) async {
         PollRequests pollRequests = PollRequests();

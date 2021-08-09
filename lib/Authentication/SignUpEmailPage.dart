@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:public_poll/Authentication/Validator.dart';
 import 'package:public_poll/Controller/UserController.dart';
 import 'package:public_poll/Mobile/HomePage.dart';
@@ -73,7 +74,7 @@ class _SignUpEmailPage extends State<SignUpEmailPage> {
               child: Text(
                 birthdayString,
                 style: Styles.baseTextStyleWithColor(
-                    context, 30, Theme.of(context).bottomAppBarColor),
+                    context, 25, Theme.of(context).bottomAppBarColor),
               ),
               style: ButtonStyle(
                 backgroundColor: MaterialStateProperty.all<Color>(
@@ -236,6 +237,7 @@ class _SignUpEmailPage extends State<SignUpEmailPage> {
       height: size.height * .05,
       child: ElevatedButton(
         onPressed: () async {
+          if (EasyLoading.isShow) return;
           CreateUser user = CreateUser(
               fields: formFields,
               birthday: birthday,
@@ -250,7 +252,7 @@ class _SignUpEmailPage extends State<SignUpEmailPage> {
         },
         child: Text(
           "Create Account",
-          style: Styles.baseTextStyle(context, 30),
+          style: Styles.baseTextStyle(context, 25),
         ),
         style: ButtonStyle(
           backgroundColor: MaterialStateProperty.all<Color>(Colors.lightBlue),
@@ -264,41 +266,41 @@ class _SignUpEmailPage extends State<SignUpEmailPage> {
     size = MediaQuery.of(context).size;
 
     if (formFields.isEmpty) {
-        //First Name Field
-        formFields.add(FieldArea(size,
-            field: createField(false, new TextEditingController(), "First Name",
-                nameValidator)));
+      //First Name Field
+      formFields.add(FieldArea(size,
+          field: createField(false, new TextEditingController(), "First Name",
+              nameValidator)));
 
-        //Last Name Field
-        formFields.add(FieldArea(size,
-            field: createField(
-                false, new TextEditingController(), "Last Name", nameValidator)));
+      //Last Name Field
+      formFields.add(FieldArea(size,
+          field: createField(
+              false, new TextEditingController(), "Last Name", nameValidator)));
 
-        //Email Form Field
-        formFields.add(FieldArea(size,
-            field: createField(
-                false, new TextEditingController(), "Email", emailValidator)));
+      //Email Form Field
+      formFields.add(FieldArea(size,
+          field: createField(
+              false, new TextEditingController(), "Email", emailValidator)));
 
-        //Username Form Field
-        formFields.add(FieldArea(size,
-            field: createField(false, new TextEditingController(), "Username",
-                usernameValidator)));
+      //Username Form Field
+      formFields.add(FieldArea(size,
+          field: createField(false, new TextEditingController(), "Username",
+              usernameValidator)));
 
-        //Password Form Field
-        formFields.add(FieldArea(size,
-            field: createField(true, new TextEditingController(), "Password",
-                passwordValidator)));
+      //Password Form Field
+      formFields.add(FieldArea(size,
+          field: createField(true, new TextEditingController(), "Password",
+              passwordValidator)));
 
-        //Password confirmation Field
-        formFields.add(FieldArea(size,
-            field: createField(true, new TextEditingController(),
-                "Password Confirmation", passwordValidator)));
-      }
+      //Password confirmation Field
+      formFields.add(FieldArea(size,
+          field: createField(true, new TextEditingController(),
+              "Password Confirmation", passwordValidator)));
+    }
     return Scaffold(
       appBar: header(
         context: context,
         isAppTitle: false,
-        title: "Sign Up with Email",
+        title: "Email Sign Up",
         eliminateBackButton: false,
         color: Theme.of(context).scaffoldBackgroundColor,
       ),
@@ -437,6 +439,7 @@ class CreateUser {
   }
 
   Future createUser() async {
+    EasyLoading.show();
     User user = new User(
         username: username,
         email: email,
@@ -448,16 +451,18 @@ class CreateUser {
         profilePictureLink: ""); //always starts blank, edited after
     String uid = await requests.createUser(user);
     if (uid.isEmpty || uid.indexOf(" ") != -1) {
+      EasyLoading.dismiss();
       popup("Error! Try again.");
     } else {
       //Stay logged in
       SharedPreferences preferences = await SharedPreferences.getInstance();
       preferences.setString("UID", uid);
 
-      if (userProfileImage.path != null) {
+      if (userProfileImage != null && userProfileImage.path != null) {
         UserController controller = UserController();
-        await controller.uploadProfileImage(userProfileImage, uid, false);
+        await controller.uploadProfileImage(userProfileImage, uid, true);
       }
+      EasyLoading.dismiss();
 
       Navigator.pushReplacement(
           context, new MaterialPageRoute(builder: (context) => HomePage(uid)));

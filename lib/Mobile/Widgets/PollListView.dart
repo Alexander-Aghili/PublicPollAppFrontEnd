@@ -3,7 +3,7 @@ import 'package:public_poll/Mobile/Widgets/PollDisplay.dart';
 import 'package:public_poll/Models/Poll.dart';
 
 Widget pollListView(
-    List<Poll> polls, Function refreshList, Size size, String uid) {
+    List<Poll> polls, Function refreshList, Size size, String uid/* Must be UID of host*/) { 
   return RefreshIndicator(
     onRefresh: refreshList,
     child: ListView(
@@ -26,6 +26,6 @@ List<Widget> createPollsUIFromListOfPolls(
 Widget createPollUIFromSinglePoll(Poll poll, Size size, String uid) {
   return Container(
     padding: EdgeInsets.symmetric(vertical: size.height * .01),
-    child: PollDisplay(poll, uid, key: UniqueKey(),),
+    child: PollDisplay(poll, uid, key: UniqueKey()),
   );
 }

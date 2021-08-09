@@ -31,6 +31,7 @@ class _HomePage extends State<HomePage> {
   PageController pageController;
   int pageIndex = 0;
   String uid;
+  bool freeze;
 
   Future accountData;
   Future homePageData;
@@ -62,6 +63,7 @@ class _HomePage extends State<HomePage> {
     pageController = PageController();
     accountData = getUserFromID();
     homePageData = getPollsRandom();
+    freeze = false;
   }
 
   void dispose() {
@@ -69,13 +71,27 @@ class _HomePage extends State<HomePage> {
     super.dispose();
   }
 
+  void freezePage() {
+    setState(() {
+      freeze = true;
+    });
+  }
+
+  void unFreezePage() {
+    setState(() {
+      freeze = false;
+    });
+  }
+
   void pageChanged(int pageNumber) {
+    if (freeze) return;
     setState(() {
       this.pageIndex = pageNumber;
     });
   }
 
   void onTapChangePage(int pageNumber) {
+    if (freeze) return;
     pageController.jumpToPage(pageNumber);
   }
 
@@ -98,19 +114,24 @@ class _HomePage extends State<HomePage> {
                 builder: (context, snapshot) {
                   if (snapshot.hasData || snapshot.hasError) {
                     return Scaffold(
-                      body: PageView(
-                        children: <Widget>[
-                          if (snapshot.hasError)
-                            PollPage(user, new List<Poll>.empty(growable: true),
-                                updatePolls),
-                          if (!snapshot.hasError)
-                            PollPage(user, snapshot.data, updatePolls),
-                          CreatePollPage(uid),
-                          AccountPage(user, true, updateUser),
-                        ],
-                        controller: pageController,
-                        onPageChanged: pageChanged,
-                        physics: NeverScrollableScrollPhysics(),
+                      body: AbsorbPointer(
+                        absorbing: freeze,
+                        child: PageView(
+                          children: <Widget>[
+                            if (snapshot.hasError)
+                              PollPage(
+                                  user,
+                                  new List<Poll>.empty(growable: true),
+                                  updatePolls),
+                            if (!snapshot.hasError)
+                              PollPage(user, snapshot.data, updatePolls),
+                            CreatePollPage(uid, freezePage, unFreezePage),
+                            AccountPage(user, uid, updateUser),
+                          ],
+                          controller: pageController,
+                          onPageChanged: pageChanged,
+                          physics: NeverScrollableScrollPhysics(),
+                        ),
                       ),
                       bottomNavigationBar: CupertinoTabBar(
                         currentIndex: pageIndex,
