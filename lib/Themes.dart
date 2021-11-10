@@ -61,6 +61,9 @@ ThemeData lightMode() {
     focusColor: Colors.grey.shade300,
     accentColor: Colors.grey.shade800,
     textSelectionTheme: lightModeTextSelectionTheme(),
+    dialogTheme: DialogTheme(
+      contentTextStyle: TextStyle(fontSize: 25),
+    ),
   );
 }
 

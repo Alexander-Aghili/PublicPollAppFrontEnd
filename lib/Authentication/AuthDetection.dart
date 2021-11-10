@@ -11,7 +11,6 @@ class AuthDetection extends StatefulWidget {
 }
 
 class _AuthDetection extends State<AuthDetection> {
-
   //Checks if user is logged in
   Future<String> isLoggedIn() async {
     SharedPreferences preferences = await SharedPreferences.getInstance();

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:public_poll/Authentication/SignUpEmailPage.dart';
+import 'package:public_poll/Controller/Domain.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SignUpPage extends StatefulWidget {
   @override
@@ -70,16 +72,16 @@ class _SignUpPage extends State<SignUpPage> {
             child: serviceButtonContainer(AssetImage("assets/images/authbuttons/email_signin_button.png")),
           ),
         ),
-        Padding(padding: EdgeInsets.symmetric(vertical: size.height*.01)),
-        SizedBox(
-          height: height,
-          child: signInWithSeperateServiceButton(
-            image: AssetImage("assets/images/authbuttons/google_signin_button.png"),
-            function: null,
-          ),
-        ),
-        Padding(padding: EdgeInsets.symmetric(vertical: size.height*.01)),
-        appleSignInButton(height),
+        // Padding(padding: EdgeInsets.symmetric(vertical: size.height*.01)),
+        // SizedBox(
+        //   height: height,
+        //   child: signInWithSeperateServiceButton(
+        //     image: AssetImage("assets/images/authbuttons/google_signin_button.png"),
+        //     function: null,
+        //   ),
+        // ),
+        // Padding(padding: EdgeInsets.symmetric(vertical: size.height*.01)),
+        // appleSignInButton(height),
       ],
     );
   }
@@ -115,7 +117,9 @@ class _SignUpPage extends State<SignUpPage> {
 
   Widget help() {
     return GestureDetector(
-      onTap: null,
+      onTap: () async {
+        await launch(Domain.getWeb() + "help");
+      },
       child: Container(
         padding: EdgeInsets.all(10),
         alignment: Alignment.center,

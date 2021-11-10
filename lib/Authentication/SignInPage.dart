@@ -3,11 +3,14 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:public_poll/Authentication/SignUpPage.dart';
+import 'package:public_poll/Controller/Domain.dart';
 import 'package:public_poll/Controller/UserController.dart';
 import 'package:public_poll/Mobile/HomePage.dart';
+import 'package:public_poll/Mobile/Widgets/Alert.dart';
 import 'package:public_poll/Style.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SignInPage extends StatefulWidget {
   @override
@@ -129,8 +132,12 @@ class _SignInPage extends State<SignInPage> {
             showDialog(
                 context: context,
                 builder: (context) {
+                  TextEditingController emailInput = TextEditingController();
                   return AlertDialog(
-                    title: Text("Forgot Password?", style: TextStyle(fontSize: 20),),
+                    title: Text(
+                      "Forgot Password?",
+                      style: TextStyle(fontSize: 20),
+                    ),
                     content: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.center,
@@ -138,10 +145,36 @@ class _SignInPage extends State<SignInPage> {
                       children: [
                         Text("Enter your email to reset your password."),
                         TextField(
-                          
+                          controller: emailInput,
                         ),
                       ],
                     ),
+                    actions: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () async {
+                              if (emailInput.text.trim() == "") return;
+                              EasyLoading.show();
+                              UserController controller = new UserController();
+                              if (await controller.resetPasswordInitRequest(
+                                      emailInput.text.trim()) ==
+                                  true) {
+                                EasyLoading.dismiss();
+                                Navigator.pop(context);
+                                removedSnackBar("Check your email", context);
+                              } else {
+                                EasyLoading.dismiss();
+                                Navigator.pop(context);
+                                removedSnackBar("There was an error", context);
+                              }
+                            },
+                            child: Text("Submit"),
+                          ),
+                        ],
+                      )
+                    ],
                   );
                 });
           },
@@ -233,7 +266,9 @@ class _SignInPage extends State<SignInPage> {
 
   Widget help() {
     return GestureDetector(
-      onTap: null,
+      onTap: () async {
+        await launch(Domain.getWeb() + "help");
+      },
       child: Container(
         padding: EdgeInsets.all(10),
         alignment: Alignment.center,
@@ -271,8 +306,8 @@ class _SignInPage extends State<SignInPage> {
                   errorDisplay,
                   signInForm(),
                   signInButton(),
-                  orContainer(50),
-                  seperateServicesSignInColumn(),
+                  //orContainer(50),
+                  //seperateServicesSignInColumn(),
                   signUpButton(context),
                   help(),
                 ],
@@ -310,6 +345,7 @@ class _SignInPage extends State<SignInPage> {
     SignIn signIn = SignIn(
         username: usernameController.text, password: passwordController.text);
     String uid = await signIn.sendSignInRequest();
+
     //Error container says bad username or password
     if (uid.isNotEmpty && uid.indexOf(" ") == -1) {
       //Saving logged
@@ -345,12 +381,13 @@ class SignIn {
   }
 
   Future signInWithApple() async {
-    final credential = SignInWithApple.getAppleIDCredential(
+    final credential = await SignInWithApple.getAppleIDCredential(
       scopes: [
         AppleIDAuthorizationScopes.email,
         AppleIDAuthorizationScopes.fullName,
       ],
     );
+
 
     print(credential);
   }

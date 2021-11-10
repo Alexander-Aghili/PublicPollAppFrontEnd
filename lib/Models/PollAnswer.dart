@@ -36,7 +36,7 @@ class PollAnswer {
       pollID: pollID,
       letter: json['letter'] as String,
       answer: json['answer'] as String,
-      userIDs: getUserIDs(), // Might not work
+      userIDs: getUserIDs(),
     );
   }
 

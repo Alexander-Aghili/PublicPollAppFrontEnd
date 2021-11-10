@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:public_poll/Controller/Domain.dart';
 import 'package:public_poll/Mobile/Widgets/Essential/Avatar.dart';
 import 'package:public_poll/Models/User.dart';
 import 'package:public_poll/Style.dart';
@@ -45,8 +46,7 @@ class _AccountHeader extends State<AccountHeader> {
       avatar = Image.asset("assets/images/default_user_image.jpg");
     } else {
       if (user.profilePicture == null) {
-        print("Making Request");
-        avatar = Image.network(user.profilePictureLink);
+        avatar = Image.network(Domain.getAPI() + "users/getProfilePicture/" + user.userID);
         user.profilePicture = avatar;
       } else {
         avatar = user.profilePicture;

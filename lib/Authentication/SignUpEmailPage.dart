@@ -1,10 +1,12 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:public_poll/Authentication/Validator.dart';
 import 'package:public_poll/Controller/UserController.dart';
 import 'package:public_poll/Mobile/HomePage.dart';
+import 'package:public_poll/Mobile/Widgets/Alert.dart';
 import 'package:public_poll/Mobile/Widgets/Essential/Header.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:public_poll/Mobile/Widgets/FormFields.dart';
@@ -59,7 +61,7 @@ class _SignUpEmailPage extends State<SignUpEmailPage> {
           fieldHeader("Select Birthday: "),
           Padding(padding: EdgeInsets.symmetric(vertical: size.height * .005)),
           Container(
-            height: size.height * .05,
+            height: 25 + size.height * .025,
             width: size.width * .75,
             decoration: BoxDecoration(
                 borderRadius: BorderRadius.all(Radius.circular(20))),
@@ -136,33 +138,34 @@ class _SignUpEmailPage extends State<SignUpEmailPage> {
           genderListTile("Female"),
           //Other Selection
           //ToDo: Get this to work
-          ListTile(
-            title: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[
-                Text(
-                  "Other: ",
-                  style: Styles.baseTextStyle(context, 30),
-                ),
-                Container(
-                  width: size.width * .5,
-                  height: size.height * .015,
-                  child: TextField(
-                    controller: otherController,
+          SizedBox(
+            width: size.width,
+            child: ListTile(
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  Text(
+                    "Other: ",
+                    style: Styles.baseTextStyle(context, 30),
                   ),
-                ),
-              ],
+                  SizedBox(
+                    width: size.width * .35,
+                    child: TextField(
+                      controller: otherController,
+                    ),
+                  ),
+                ],
+              ),
+              leading: Radio<String>(
+                  value: otherController.text.toString(),
+                  groupValue: gender,
+                  onChanged: (String genderSelected) {
+                    setState(() {
+                      gender = genderSelected;
+                    });
+                  }),
             ),
-            leading: Radio<String>(
-                value: otherController.text.toString(),
-                groupValue: gender,
-                onChanged: (String genderSelected) {
-                  print(otherController.text);
-                  setState(() {
-                    gender = genderSelected;
-                  });
-                }),
           ),
         ],
       ),
@@ -234,9 +237,13 @@ class _SignUpEmailPage extends State<SignUpEmailPage> {
         horizontal: size.width * .05,
       ),
       width: size.width * .75,
-      height: size.height * .05,
+      height: 25 + size.height * .025,
       child: ElevatedButton(
         onPressed: () async {
+          // String uid = "iC2NBlQT3A5j";
+          // Navigator.pushReplacement(context,
+          //     new MaterialPageRoute(builder: (context) => HomePage(uid)));
+          // return;
           if (EasyLoading.isShow) return;
           CreateUser user = CreateUser(
               fields: formFields,
@@ -337,10 +344,17 @@ class _SignUpEmailPage extends State<SignUpEmailPage> {
   }
 
   Future<File> getPicture() async {
-    PickedFile image =
-        // ignore: invalid_use_of_visible_for_testing_member
-        await ImagePicker.platform.pickImage(source: ImageSource.gallery);
-    userProfileImage = File(image.path);
+    try {
+      PickedFile image =
+          await ImagePicker().getImage(source: ImageSource.gallery);
+      userProfileImage = File(image.path);
+    } catch (e) {
+      if (e.runtimeType == PlatformException) {
+        requestPhotoAccess(context);
+      } else {
+        popup(context, "Error selecting image");
+      }
+    }
     return userProfileImage;
   }
 }
@@ -410,13 +424,14 @@ class CreateUser {
 
     if (birthday.isAfter(getApprovalDate())) {
       popup(
+        context,
         "You must be 13 or older to make an account. See our Terms of Service for further details.",
       );
       return false;
     }
 
     if (gender == "" || gender == null) {
-      popup("Please select a gender");
+      popup(context, "Please select a gender");
       return false;
     }
     return true;
@@ -424,18 +439,6 @@ class CreateUser {
 
   DateTime getApprovalDate() {
     return DateTime.now().subtract(Duration(days: (13 * 365)));
-  }
-
-  void popup(String text) {
-    showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            content: Text(
-              text,
-            ),
-          );
-        });
   }
 
   Future createUser() async {
@@ -452,7 +455,8 @@ class CreateUser {
     String uid = await requests.createUser(user);
     if (uid.isEmpty || uid.indexOf(" ") != -1) {
       EasyLoading.dismiss();
-      popup("Error! Try again.");
+      popup(context,
+          "Error! Cannot create user at this time. Try again later or contact us.");
     } else {
       //Stay logged in
       SharedPreferences preferences = await SharedPreferences.getInstance();
@@ -460,7 +464,11 @@ class CreateUser {
 
       if (userProfileImage != null && userProfileImage.path != null) {
         UserController controller = UserController();
-        await controller.uploadProfileImage(userProfileImage, uid, true);
+        String response =
+            await controller.uploadProfileImage(userProfileImage, uid, true);
+        if (response != "") {
+          popup(context, "User Created. Profile Picture was not saved.");
+        }
       }
       EasyLoading.dismiss();
 

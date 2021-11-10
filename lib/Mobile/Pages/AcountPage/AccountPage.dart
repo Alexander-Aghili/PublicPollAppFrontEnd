@@ -39,7 +39,8 @@ class _AccountPage extends State<AccountPage> {
   User user;
   Function updateAccountInfo;
   bool isUserAccount;
-  _AccountPage(this.user, this.hostuid, this.updateAccountInfo) {
+  bool backButton;
+  _AccountPage(this.user, this.hostuid, this.updateAccountInfo) { 
     isUserAccount = (hostuid == user.userID);
   }
 
@@ -51,8 +52,9 @@ class _AccountPage extends State<AccountPage> {
   List<Poll> myPolls;
 
   //URLS
-  String reportBugUrl = Domain.getWeb() + "bugReport";
+  String reportBugUrl = Domain.getWeb() + "reportBug";
   String contactUsUrl = Domain.getWeb() + "contactUs";
+  String helpUrl = Domain.getWeb() + "help";
 
   @override
   void initState() {
@@ -157,9 +159,15 @@ class _AccountPage extends State<AccountPage> {
                 ? launch(contactUsUrl)
                 : throw 'Could not launch $contactUsUrl',
           }
+        else if (item == 3)
+          {
+            await canLaunch(helpUrl)
+                ? launch(helpUrl)
+                : throw 'Could not launch $helpUrl',
+          }
         else if (item == 4)
           {
-            await logout(),
+            await logout(hostuid),
           }
       },
     );
@@ -263,10 +271,12 @@ class _AccountPage extends State<AccountPage> {
                           .value;
                       return TabBarView(
                         children: <Widget>[
-                          UserPollTab(savedPolls, user.userID, hostuid, 1, updatePolls),
-                          UserPollTab(recentlyRespondedToPolls, user.userID, hostuid, 2,
-                              updatePolls),
-                          UserPollTab(myPolls, user.userID, hostuid, 3, updatePolls),
+                          UserPollTab(
+                              savedPolls, user.userID, hostuid, 1, updatePolls),
+                          UserPollTab(recentlyRespondedToPolls, user.userID,
+                              hostuid, 2, updatePolls),
+                          UserPollTab(
+                              myPolls, user.userID, hostuid, 3, updatePolls),
                         ],
                       );
                     }
@@ -279,9 +289,13 @@ class _AccountPage extends State<AccountPage> {
     );
   }
 
-  Future logout() async {
+  Future logout(String userID) async {
+    UserController userController = new UserController();
+    await userController.logout(userID);
+
     SharedPreferences preferences = await SharedPreferences.getInstance();
     preferences.setString("UID", "");
+    preferences.setString("SessionID", "");
     Navigator.pushReplacement(
         context, MaterialPageRoute(builder: (context) => SignInPage()));
   }

@@ -23,10 +23,10 @@ import 'Essential/MenuItem.dart';
 
 class PollDisplay extends StatefulWidget {
   final Poll poll;
-  final String userID; // You always want this person to be the person who is logged in, 
+  final String
+      userID; // You always want this person to be the person who is logged in,
   //ei. localstorage "UID" would return this
-  PollDisplay(this.poll, this.userID, {@required Key key})
-      : super(key: key);
+  PollDisplay(this.poll, this.userID, {@required Key key}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() => _PollDisplay(poll, userID);
@@ -138,23 +138,11 @@ class _PollDisplay extends State<PollDisplay> {
                   color: Theme.of(context).primaryColor,
                   itemBuilder: (context) => <PopupMenuEntry>[
                     if (!isSaved)
-                      menuItem(
-                        0,
-                        "Save",
-                        Icon(Icons.archive),
-                        size: size,
-                        context: context,
-                        extraPadding: true
-                      ),
+                      menuItem(0, "Save", Icon(Icons.archive),
+                          size: size, context: context, extraPadding: true),
                     if (isSaved)
-                      menuItem(
-                        0,
-                        "Unsave",
-                        Icon(Icons.crop),
-                        size: size,
-                        context: context,
-                        extraPadding: true
-                      ),
+                      menuItem(0, "Unsave", Icon(Icons.crop),
+                          size: size, context: context, extraPadding: true),
                     PopupMenuDivider(),
                     if (userID != poll.creatorID)
                       menuItem(
@@ -167,8 +155,7 @@ class _PollDisplay extends State<PollDisplay> {
                           color: Colors.red,
                           size: size,
                           context: context,
-                          extraPadding: true
-                        ),
+                          extraPadding: true),
                     if (userID == poll.creatorID)
                       menuItem(
                           2,
@@ -180,41 +167,43 @@ class _PollDisplay extends State<PollDisplay> {
                           color: Colors.red,
                           size: size,
                           context: context,
-                          extraPadding: true
-                        ),
+                          extraPadding: true),
                   ],
                   onSelected: (item) async {
                     if (item == 0 && !isSaved) {
                       UserController controller = UserController();
-                      await controller.addUserPolls(userID, poll.pollID, 1);
+                      if (await controller.addUserPolls(
+                              userID, poll.pollID, 1) ==
+                          "ok") {
+                        removedSnackBar("Poll Saved", context);
+                      } else {
+                        errorSnackBar("Cannot save poll", context);
+                      }
                       setState(() {
                         isSaved = true;
                       });
-                    }
-                    if (item == 0 && isSaved) {
+                    } else if (item == 0 && isSaved) {
                       UserController controller = UserController();
-                      controller.deleteUserPoll(userID, poll.pollID, 1);
+                      if (await controller.deleteUserPoll(
+                              userID, poll.pollID, 1) ==
+                          "ok") {
+                        removedSnackBar("Poll Unsaved", context);
+                      } else {
+                        errorSnackBar("Cannot unsave polls", context);
+                      }
                       setState(() {
                         isSaved = false;
                       });
                     }
 
-                    PollRequests requests = PollRequests();
                     if (item == 1) {
                       showDialog(
                           context: context,
                           builder: (context) {
-                            return report(context, poll.pollID, "poll");
+                            return report(context, poll.pollID, "poll", userID);
                           });
                     } else if (item == 2) {
-                      String response = await requests.deletePoll(poll.pollID);
-                      if (response == "ok")
-                        removedSnackBar("Poll Deleted", context);
-                      else {
-                        errorSnackBar(
-                            "Error. Could not delete poll. Try again.",
-                            context);
-                      }
+                      confirmDelete(context, deleteFunction);
                     }
                   },
                 );
@@ -224,6 +213,20 @@ class _PollDisplay extends State<PollDisplay> {
             }),
       ],
     );
+  }
+
+  Future deleteFunction() async {
+    PollRequests requests = PollRequests();
+
+    String response =
+          await requests.deletePoll(userID, poll.pollID);
+      if (response == "ok")
+        removedSnackBar("Poll Deleted", context);
+      else {
+        errorSnackBar(
+            "Error. Could not delete poll. Try again.",
+            context);
+      }
   }
 
   Row bottomDataRow() {
@@ -265,7 +268,7 @@ class _PollDisplay extends State<PollDisplay> {
         Spacer(),
         GestureDetector(
           onTap: () => Share.share(
-            Domain.getWeb() + "pollDisplay?id=" + poll.pollID.toString(),
+            Domain.getWeb() + 'pollDisplay?id=' + poll.pollID.toString(),
           ),
           child: bottomRowIcon(shareIcon, Alignment.centerRight),
         ),
@@ -411,6 +414,17 @@ class _AnswerBox extends State<AnswerBox> {
 
   void answerClicked() async {
     if (selectedAnswer == null) {
+      setState(() {
+        if (answer.userIDs == null || answer.userIDs.isEmpty) {
+          answer.userIDs = new List<String>.empty(growable: true);
+        }
+        answer.userIDs.add(uid);
+
+        selectedAnswer = answer.letter;
+        changeBorder();
+        notifyParent(answer.letter);
+      });
+
       PollRequests requests = PollRequests();
       String response =
           await requests.addUserResponseToPoll(uid, pid, answer.letter);
@@ -431,17 +445,6 @@ class _AnswerBox extends State<AnswerBox> {
         errorSnackBar("Error saving", context);
         return;
       }
-
-      setState(() {
-        if (answer.userIDs == null || answer.userIDs.isEmpty) {
-          answer.userIDs = new List<String>.empty(growable: true);
-        }
-        answer.userIDs.add(uid);
-
-        selectedAnswer = answer.letter;
-        changeBorder();
-        notifyParent(answer.letter);
-      });
     }
   }
 

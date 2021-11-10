@@ -6,6 +6,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:public_poll/Models/PollComment.dart';
+import 'UserController.dart';
 
 class PollRequests {
   String url = Domain.getAPI() + 'poll/';
@@ -38,11 +39,12 @@ class PollRequests {
 
   /* POST Requests */
   Future<String> createPoll(Poll poll) async {
+    var requestHeaders =
+        await getHeaders(); //getHeaders() method in UserController.dart
+
     Response response = await http.post(
       Uri.parse(url + "addPoll"),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
+      headers: requestHeaders,
       body: jsonEncode(poll),
     );
 
@@ -74,14 +76,13 @@ class PollRequests {
   }
 
   Future<String> addComment(PollComment comment) async {
+    var requestHeaders = await getHeaders();
+
     Response response = await http.post(
       Uri.parse(url + "addComment"),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
+      headers: requestHeaders,
       body: jsonEncode(comment.toJsonSend()),
     );
-    print(response.body.toString());
     if (response.statusCode != 201 || response.body.indexOf(" ") != -1) {
       return "error";
     } else {
@@ -98,11 +99,12 @@ class PollRequests {
         '", "letter": "' +
         letter +
         '"}';
+
+    var requestHeaders = await getHeaders();
+
     Response response = await http.post(
       Uri.parse(url + "addUserResponseToPoll"),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
+      headers: requestHeaders,
       body: json,
     );
 
@@ -114,9 +116,12 @@ class PollRequests {
   }
 
   /*Delete*/
-  Future<String> deletePoll(String pollID) async {
-    Response response =
-        await http.delete(Uri.parse(url + "deletePoll/" + pollID));
+  Future<String> deletePoll(String userID, String pollID) async {
+    var requestHeaders = await getHeaders();
+
+    Response response = await http.delete(
+        Uri.parse(url + "deletePoll/" + userID + '/' + pollID),
+        headers: requestHeaders);
 
     if (response.statusCode != 202 || response.body != "ok") {
       return "error";
@@ -125,9 +130,12 @@ class PollRequests {
     }
   }
 
-  Future<String> deleteComment(String id) async {
-    Response response =
-        await http.delete(Uri.parse(url + "deleteComment/" + id));
+  Future<String> deleteComment(String userID, String id) async {
+    var requestHeaders = await getHeaders();
+    Response response = await http.delete(
+        Uri.parse(url + "deleteComment/" + userID + '/' + id),
+        headers: requestHeaders);
+
     if (response.statusCode != 202 || response.body != "ok") {
       return "error";
     } else {

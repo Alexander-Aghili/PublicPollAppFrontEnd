@@ -12,8 +12,13 @@ class UserPollTab extends StatefulWidget {
   UserPollTab(this.polls, this.uid, this.hostuid, this.type, this.updatePolls);
 
   @override
-  State<StatefulWidget> createState() =>
-      _UserPollTab(polls, uid, hostuid, type, updatePolls,);
+  State<StatefulWidget> createState() => _UserPollTab(
+        polls,
+        uid,
+        hostuid,
+        type,
+        updatePolls,
+      );
 }
 
 class _UserPollTab extends State<UserPollTab> {
@@ -29,11 +34,27 @@ class _UserPollTab extends State<UserPollTab> {
   @override
   void initState() {
     super.initState();
+    hidePrivateIfNotMainUser(polls);
+  }
+
+  void hidePrivateIfNotMainUser(List<Poll> polls) {
+    try {
+      int i = 0;
+      while (polls[i] != null) {
+        if (polls[i].isPrivate) {
+          polls.removeAt(i);
+        }
+        i++;
+      }
+    } catch (e) {
+      return;
+    }
   }
 
   Future refresh() async {
     setState(() {});
     List<Poll> tempPolls = await updatePolls(uid, type);
+    hidePrivateIfNotMainUser(tempPolls);
     setState(() {
       polls = tempPolls;
       listview = pollListView(

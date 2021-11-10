@@ -1,7 +1,9 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:public_poll/Controller/Domain.dart';
 import 'package:public_poll/Controller/PollRequests.dart';
+import 'package:public_poll/Controller/UserController.dart';
 import 'package:public_poll/Mobile/Pages/AcountPage/AccountPage.dart';
 import 'package:public_poll/Mobile/Widgets/Alert.dart';
 import 'package:public_poll/Mobile/Widgets/Essential/Avatar.dart';
@@ -34,9 +36,9 @@ class _CommentDisplay extends State<CommentDisplay> {
   PollComment comment;
   bool isPostingUser;
   Function deleteComment;
-  String hostuid; 
-  _CommentDisplay(
-      this.user, this.comment, this.isPostingUser, this.deleteComment, this.hostuid);
+  String hostuid;
+  _CommentDisplay(this.user, this.comment, this.isPostingUser,
+      this.deleteComment, this.hostuid);
 
   Size size;
 
@@ -82,7 +84,8 @@ class _CommentDisplay extends State<CommentDisplay> {
       avatar = Image.asset("assets/images/default_user_image.jpg");
     } else {
       if (user.profilePicture == null) {
-        avatar = Image.network(user.profilePictureLink);
+        avatar = Image.network(
+            Domain.getAPI() + 'users/getProfilePicture/' + user.userID);
         setState(() {
           user.profilePicture = avatar;
         });
@@ -167,14 +170,14 @@ class _CommentDisplay extends State<CommentDisplay> {
           showDialog(
             context: context,
             builder: (context) {
-              return report(context, comment.commentID.toString(), "comment");
+              return report(context, comment.commentID.toString(), "comment", comment.commentID.toString());
             },
           );
         }
 
         if (item == 1) {
-          String response =
-              await pollRequests.deleteComment(comment.commentID.toString());
+          String response = await pollRequests.deleteComment(
+              hostuid, comment.commentID.toString());
           if (response == "ok") {
             deleteComment(comment);
             removedSnackBar("Comment Removed", context);

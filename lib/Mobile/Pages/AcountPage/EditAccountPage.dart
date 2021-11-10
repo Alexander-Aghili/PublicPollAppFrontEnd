@@ -1,22 +1,27 @@
 import 'dart:io';
 
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:public_poll/Authentication/SignInPage.dart';
 import 'package:public_poll/Authentication/Validator.dart';
 import 'package:public_poll/Controller/UserController.dart';
+import 'package:public_poll/Mobile/Widgets/Alert.dart';
 import 'package:public_poll/Mobile/Widgets/Essential/Avatar.dart';
 import 'package:public_poll/Mobile/Widgets/Essential/Header.dart';
 import 'package:public_poll/Mobile/Widgets/FormFields.dart';
 import 'package:public_poll/Models/KeyValue.dart';
 import 'package:public_poll/Models/User.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:app_settings/app_settings.dart';
 
 import '../../../Themes.dart';
 import '../../../main.dart';
 
-//TODO: Do
 class EditAccountPage extends StatefulWidget {
   final User user;
 
@@ -66,12 +71,20 @@ class _EditAccountPage extends State<EditAccountPage> {
   Widget profilePicture(BuildContext context) {
     return GestureDetector(
       onTap: () async {
-        PickedFile file =
-            await ImagePicker.platform.pickImage(source: ImageSource.gallery);
-        setState(() {
-          profileFile = File(file.path);
-          profileImage = Image.file(profileFile);
-        });
+        try {
+          PickedFile file =
+              await ImagePicker().getImage(source: ImageSource.gallery);
+          setState(() {
+            profileFile = File(file.path);
+            profileImage = Image.file(profileFile);
+          });
+        } on PlatformException catch (e) {
+          if (e.code == 'photo_access_denied') {
+            requestPhotoAccess(context);
+          } else {
+            popup(context, "There was an error selecting photos");
+          }
+        }
       },
       child: getAvatar(profileImage, 45, true),
     );
@@ -134,7 +147,75 @@ class _EditAccountPage extends State<EditAccountPage> {
     return Container(
       width: size.width * .75,
       child: ElevatedButton(
-        onPressed: () {},
+        onPressed: () {
+          showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text("Are you sure you want to delete your account?",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 25,
+                      )),
+                  content: Text(
+                    "This cannot be undone",
+                    style: TextStyle(fontSize: 15),
+                    textAlign: TextAlign.center,
+                  ),
+                  actions: [
+                    SizedBox(
+                      width: size.width,
+                      child: Row(
+                        children: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: Text(
+                              "Cancel",
+                              style: Theme.of(context)
+                                  .dialogTheme
+                                  .contentTextStyle,
+                            ),
+                          ),
+                          Spacer(),
+                          TextButton(
+                              onPressed: () async {
+                                EasyLoading.show();
+                                UserController controller = UserController();
+                                bool isDeleted =
+                                    await controller.deleteUser(user.userID);
+                                if (!isDeleted) {
+                                  EasyLoading.dismiss();
+                                  errorSnackBar(
+                                      "Error: Cannot delete user at this time.",
+                                      context);
+                                }
+
+                                if (isDeleted) {
+                                  SharedPreferences preferences =
+                                      await SharedPreferences.getInstance();
+                                  preferences.setString("UID", "");
+                                  preferences.setString("SessionID", "");
+                                  EasyLoading.dismiss();
+                                  Navigator.push(
+                                      context,
+                                      new MaterialPageRoute(
+                                          builder: (context) => SignInPage()));
+                                }
+                              },
+                              child: Text(
+                                "Delete",
+                                style:
+                                    TextStyle(fontSize: 25, color: Colors.red),
+                              )),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              });
+        },
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.center,
@@ -252,7 +333,7 @@ class _EditAccountPage extends State<EditAccountPage> {
       String response =
           await controller.editUserInformation(user.userID, keyValuePairs);
       if (response == "error") {
-        print("error"); // debug
+        return;
       } else if (response == "usernameExists") {
         Validator.setMessage("username");
         return;
@@ -273,8 +354,14 @@ class _EditAccountPage extends State<EditAccountPage> {
       } else {
         needReplaceUrl = true;
       }
-      await controller.uploadProfileImage(
-          profileFile, user.userID, needReplaceUrl);
+      try {
+        await controller.uploadProfileImage(
+            profileFile, user.userID, needReplaceUrl);
+      } catch (e) {
+        errorSnackBar("Error uploading image", context);
+        savePressed = false;
+        return;
+      }
     } else {
       editValues.add(new KeyValue("image", ""));
     }

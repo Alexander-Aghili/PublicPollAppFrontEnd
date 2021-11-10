@@ -155,7 +155,7 @@ class _CreatePollPage extends State<CreatePollPage> {
     return Container(
       margin: EdgeInsets.only(top: size.height * .05),
       width: size.width * .75,
-      height: size.height * .05,
+      height: 25 + size.height * .025,
       child: ElevatedButton(
         style: ButtonStyle(
             backgroundColor: MaterialStateProperty.all(Colors.blue)),
@@ -198,7 +198,7 @@ class _CreatePollPage extends State<CreatePollPage> {
     if (code.indexOf(" ") != -1) {
       EasyLoading.dismiss();
       unFreeze();
-      errorMessage(code);
+      errorMessage("Could not create poll");
     } else {
       poll.pollID = code;
 
@@ -244,20 +244,23 @@ class _CreatePollPage extends State<CreatePollPage> {
           return AlertDialog(
             title: Text(
               "Poll Created!",
-              style: TextStyle(fontSize: 45),
+              style: TextStyle(fontSize: 35),
             ),
             content: Text("Your poll was created." +
                 " You can share the poll by clicking the button at the bottom left." +
-                " You can also find the poll in the My Polls section on the account page."),
+                " You can also find the poll in the My Polls section on the account page.", style: TextStyle(fontSize: 23.5),),
             actions: <Widget>[
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: <Widget>[
-                  shareButton(poll),
-                  Padding(padding: EdgeInsets.only(right: size.width * .45)),
-                  closeButton(),
-                ],
+              SizedBox(
+                width: MediaQuery.of(context).size.width,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    closeButton(),
+                    Spacer(),
+                    shareButton(poll),
+                  ],
+                ),
               ),
             ],
           );

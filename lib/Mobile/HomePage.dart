@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:public_poll/Authentication/SignInPage.dart';
+import 'package:public_poll/Controller/Domain.dart';
 import 'package:public_poll/Controller/PollRequests.dart';
 import 'package:public_poll/Controller/UserController.dart';
 import 'package:public_poll/Mobile/Widgets/Essential/SplashScreen.dart';
@@ -39,8 +41,22 @@ class _HomePage extends State<HomePage> {
   _HomePage({this.uid});
 
   Future<User> getUserFromID() async {
+    if (uid == null) {
+      return null;
+    }
+
     UserController userController = UserController();
-    return await userController.getUserByID(uid);
+    User user = await userController.getUserByID(uid);
+
+    //This might not work, aka not tested
+    if (user.profilePictureLink != "") {
+      user.profilePicture = Image.network(
+          Domain.getAPI() + "users/getProfilePicture/" + user.userID);
+    } else {
+      user.profilePicture = Image.asset("assets/images/default_user_image.jpg");
+    }
+
+    return user;
   }
 
   Future<List<Poll>> getPollsRandom() async {
@@ -104,10 +120,23 @@ class _HomePage extends State<HomePage> {
         statusBarBrightness:
             Theme.of(context).brightness // Dark == white status bar -- for IOS.
         ));
+    // return Scaffold(
+    //   body: Center(
+    //     child: Text("g"),
+    //   ),
+    // );
     return FutureBuilder(
         future: accountData,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
+            //In case of routing error idk
+            if (snapshot.data == null) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => SignInPage()),
+              );
+            }
+
             User user = snapshot.data;
             return FutureBuilder(
                 future: homePageData,

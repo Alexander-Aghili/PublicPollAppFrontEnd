@@ -55,7 +55,8 @@ class StatisticsPage extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Padding(
+          Container(
+            width: size.width * .15,
             padding: EdgeInsets.symmetric(horizontal: 15),
             child: Text(letter + ") "),
           ),
@@ -98,12 +99,18 @@ class StatisticsPage extends StatelessWidget {
           eliminateBackButton: false),
       backgroundColor: Theme.of(context).primaryColor,
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
+        child: ListView(
+          physics: const ScrollPhysics(),
+          shrinkWrap: true,
           children: [
-            totalVotes(),
-            barGraph(),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                totalVotes(),
+                barGraph(),
+              ],
+            ),
           ],
         ),
       ),

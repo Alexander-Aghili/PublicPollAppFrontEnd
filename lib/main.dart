@@ -5,6 +5,7 @@ import 'package:public_poll/Authentication/AuthDetection.dart';
 import 'package:public_poll/Themes.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import './Routing/DeepLinkRouting.dart' as router;
 
 /*
  * Copyright © 2021 Alexander Aghili - All Rights Reserved
@@ -38,6 +39,7 @@ class MyApp extends StatelessWidget {
       home: AuthDetection(),
       debugShowCheckedModeBanner: false,
       builder: EasyLoading.init(),
+      onGenerateRoute: router.generateRoute,
     );
   }
 }
